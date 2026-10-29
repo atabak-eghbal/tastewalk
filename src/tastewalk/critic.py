@@ -39,7 +39,10 @@ def template_why(stop: Stop, profile: TasteProfile) -> str:
         parts.append(f"Qloo affinity {stop.place.affinity:.2f} for fans of {favs}")
     elif favs:
         parts.append(f"recommended by Qloo for fans of {favs}")
-    return (stop.place.name + ": " + "; ".join(parts) + ".") if parts else ""
+    if not parts:
+        return ""
+    text = "; ".join(parts) + "."
+    return text[0].upper() + text[1:]
 
 
 def critique(itin: Itinerary, profile: TasteProfile, llm: LLM | None) -> Itinerary:

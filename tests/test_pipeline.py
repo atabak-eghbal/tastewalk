@@ -13,77 +13,18 @@ import pytest
 
 from tastewalk.cache import DiskCache
 from tastewalk.critic import critique
+from tastewalk.dev_fake import FAKE_KEY, FAKE_PLACES, fake_client
+from tastewalk.dev_fake import handler as fake_handler
+from tastewalk.dev_fake import place_json as _place_json
 from tastewalk.loop import run
 from tastewalk.qloo import QlooClient, parse_place
 from tastewalk.routing import order_stops, schedule, walk_minutes
 from tastewalk.schemas import Favorite, FavoriteType, Place, UserInput
 
-# Fictional test places around the Plateau (not real venues).
-FAKE_PLACES = [
-    ("P1", "Test Cafe A", "Coffee Shop", 45.5230, -73.5810, 0.95),
-    ("P2", "Test Records", "Record Store", 45.5245, -73.5835, 0.91),
-    ("P3", "Test Gallery", "Art Gallery", 45.5190, -73.5760, 0.88),
-    ("P4", "Test Bistro", "Restaurant", 45.5215, -73.5790, 0.86),
-    ("P5", "Test Cafe B", "Coffee Shop", 45.5250, -73.5800, 0.84),
-    ("P6", "Test Cafe C", "Coffee Shop", 45.5260, -73.5820, 0.83),
-    ("P7", "Test Bar", "Bar", 45.5200, -73.5820, 0.80),
-    ("FAR", "Far Away Place", "Bar", 45.70, -73.90, 0.99),  # outside city radius
-]
-
-
-def _place_json(pid, name, cat, lat, lon, aff):
-    return {
-        "entity_id": pid,
-        "name": name,
-        "location": {"lat": lat, "lon": lon},
-        "properties": {
-            "address": "1 Test St",
-            "hours": {"Monday": [{"opens": "T08:00", "closes": "T23:00"}]},
-        },
-        "tags": [
-            {"id": f"urn:tag:category:{cat}", "name": cat, "type": "urn:tag:category:place"},
-            {"id": "urn:tag:genre:indie", "name": "Indie", "type": "urn:tag:genre"},
-        ],
-        "query": {"affinity": aff},
-    }
-
-
-def fake_handler(request: httpx.Request) -> httpx.Response:
-    assert request.headers["X-Api-Key"] == "test-key"
-    if request.url.path == "/search":
-        q = request.url.params["query"]
-        if q == "Nobody":
-            return httpx.Response(200, json={"results": []})
-        return httpx.Response(
-            200,
-            json={
-                "results": [
-                    {
-                        "entity_id": f"E-{q}",
-                        "name": q,
-                        "tags": [
-                            {"id": "urn:tag:genre:indie", "name": "Indie", "type": "urn:tag:genre"}
-                        ],
-                    }
-                ]
-            },
-        )
-    if request.url.path == "/v2/insights":
-        assert request.url.params["filter.type"] == "urn:entity:place"
-        return httpx.Response(
-            200, json={"results": {"entities": [_place_json(*p) for p in FAKE_PLACES]}}
-        )
-    return httpx.Response(404)
-
 
 @pytest.fixture
 def qloo(tmp_path):
-    return QlooClient(
-        "test-key",
-        "https://fake.qloo",
-        DiskCache(tmp_path),
-        transport=httpx.MockTransport(fake_handler),
-    )
+    return fake_client(tmp_path)
 
 
 def user(*names, stops=4):
@@ -121,11 +62,11 @@ def test_qloo_responses_are_cached(tmp_path):
         return fake_handler(req)
 
     cache = DiskCache(tmp_path)
-    c1 = QlooClient("test-key", "https://fake.qloo", cache, transport=httpx.MockTransport(counting))
+    c1 = QlooClient(FAKE_KEY, "https://fake.qloo", cache, transport=httpx.MockTransport(counting))
     c1.search("Radiohead", "urn:entity:artist")
     c1.search("Radiohead", "urn:entity:artist")
     assert calls == ["/search"]
-    offline = QlooClient("test-key", "https://fake.qloo", cache, offline=True)
+    offline = QlooClient(FAKE_KEY, "https://fake.qloo", cache, offline=True)
     assert offline.search("Radiohead", "urn:entity:artist")[0]["entity_id"] == "E-Radiohead"
 
 

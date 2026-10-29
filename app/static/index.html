@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TasteWalk</title>
+<meta name="description" content="Tell it what you love. Get a walkable day built around your taste, powered by the Qloo taste graph.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="/">Taste<span>Walk</span></a>
+    <p class="tagline">Tell it what you love. Get a walkable day built around your taste, not the tourist list.</p>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<main class="wrap">
+  <section class="card form-card" aria-labelledby="form-h">
+    <h1 id="form-h">What do you love?</h1>
+    <p class="muted">Add a few favorites: artists, films, shows, books, brands. TasteWalk uses Qloo's taste graph to find places in the city that people with your taste love, then plans a walk.</p>
+
+    <div class="examples" id="examples" aria-label="Examples"></div>
+
+    <form id="form" autocomplete="off">
+      <div id="favs" class="favs"></div>
+      <button type="button" class="link-btn" id="add-fav">+ Add a favorite</button>
+
+      <div class="row opts">
+        <label>City
+          <select id="city"></select>
+        </label>
+        <label>Start
+          <input type="time" id="start" value="10:00" required>
+        </label>
+        <label>Stops
+          <input type="number" id="stops" value="5" min="2" max="8" required>
+        </label>
+      </div>
+      <button type="submit" class="primary" id="go">Plan my walk</button>
+    </form>
+  </section>
+
+  <section id="progress" class="card progress" hidden aria-live="polite">
+    <ol id="steps"></ol>
+  </section>
+
+  <section id="results" hidden>
+    <div id="profile" class="card profile"></div>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" class="tab active" data-col="qloo" aria-selected="true">With Qloo</button>
+      <button role="tab" class="tab" data-col="llm" aria-selected="false">LLM only</button>
+    </div>
+
+    <div class="compare">
+      <article class="col col-qloo active" data-col="qloo">
+        <header class="col-h">
+          <h2>With Qloo taste graph</h2>
+          <p class="muted" id="qloo-summary"></p>
+        </header>
+        <div id="map" class="map" role="img" aria-label="Map of the walking route"></div>
+        <div id="issues"></div>
+        <ol id="timeline" class="timeline"></ol>
+      </article>
+
+      <article class="col col-llm" data-col="llm">
+        <header class="col-h">
+          <h2>LLM only</h2>
+          <p class="muted">Same request, no Qloo. Places are not verified: no Qloo ID, no coordinates, no walking times.</p>
+        </header>
+        <ol id="baseline" class="baseline"></ol>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot muted">
+  Built for the Qloo Agentic Hackathon. Recommendations by <a href="https://www.qloo.com" rel="noopener">Qloo</a>.
+  Map &copy; OpenStreetMap contributors. <a href="https://github.com/atabak-eghbal/tastewalk" rel="noopener">Source (MIT)</a>
+</footer>
+
+<template id="fav-row">
+  <div class="fav">
+    <input class="fav-name" placeholder="e.g. Arcade Fire" maxlength="120" required aria-label="Favorite name">
+    <select class="fav-type" aria-label="Type"></select>
+    <button type="button" class="icon-btn fav-del" aria-label="Remove">&times;</button>
+  </div>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
