@@ -1,0 +1,207 @@
+"""Qloo API client: entity search, place insights, response parsing, disk caching.
+
+Status: endpoint paths, parameter names and response fields below are UNVERIFIED guesses
+based on hackathon forum posts. They are kept in this one file (see QLOO_* constants and the
+`_parse_*` helpers) so they can be fixed after running scripts/smoke_test_qloo.py.
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from datetime import time
+from typing import Any
+
+import httpx
+
+from .cache import DiskCache, request_key
+from .schemas import Place, ResolvedEntity, Tag
+
+log = logging.getLogger(__name__)
+
+# --- To verify against the docs / smoke test --------------------------------------------
+QLOO_SEARCH_PATH = "/search"
+QLOO_SEARCH_TYPE_PARAM = "types"
+QLOO_INSIGHTS_PATH = "/v2/insights"
+PLACE_TYPE = "urn:entity:place"
+
+# Rough city centres; used for a location filter (point + radius) and as a sanity bound.
+CITY_CENTERS: dict[str, tuple[float, float]] = {
+    "montreal": (45.5048, -73.5772),  # around Plateau / downtown
+}
+DEFAULT_RADIUS_M = 6000
+
+_WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+
+class QlooError(RuntimeError):
+    pass
+
+
+class QlooClient:
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str,
+        cache: DiskCache,
+        transport: httpx.BaseTransport | None = None,
+        offline: bool = False,
+    ):
+        self.cache = cache
+        self.offline = offline  # cache-only mode, for demos/tests without a key
+        self._http = httpx.Client(
+            base_url=base_url,
+            headers={"X-Api-Key": api_key},
+            timeout=20,
+            transport=transport,
+        )
+
+    # --- raw calls ---------------------------------------------------------------------
+    def _get(self, path: str, params: dict[str, Any]) -> dict[str, Any]:
+        key = request_key("qloo", {"path": path, "params": params})
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+        if self.offline:
+            raise QlooError(f"No QLOO_API_KEY (or --offline) and not cached: {path} {params}")
+        r = self._http.get(path, params=params)
+        if r.status_code >= 400:
+            raise QlooError(f"Qloo {path} -> {r.status_code}: {r.text[:300]}")
+        data = r.json()
+        self.cache.set(key, data)
+        return data
+
+    def search(self, query: str, entity_type: str, take: int = 5) -> list[dict[str, Any]]:
+        data = self._get(
+            QLOO_SEARCH_PATH,
+            {"query": query, QLOO_SEARCH_TYPE_PARAM: entity_type, "take": take},
+        )
+        return _results_list(data)
+
+    def place_insights(
+        self,
+        entity_ids: list[str],
+        city: str,
+        take: int = 40,
+        tag_ids: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
+        params: dict[str, Any] = {
+            "filter.type": PLACE_TYPE,
+            "signal.interests.entities": ",".join(entity_ids),
+            "take": take,
+        }
+        center = CITY_CENTERS.get(city.lower())
+        if center:
+            lat, lon = center
+            params["filter.location"] = f"POINT({lon} {lat})"
+            params["filter.location.radius"] = DEFAULT_RADIUS_M
+        else:
+            params["filter.location.query"] = city
+        if tag_ids:
+            params["signal.interests.tags"] = ",".join(tag_ids)
+        return _results_list(self._get(QLOO_INSIGHTS_PATH, params))
+
+    # --- typed helpers -----------------------------------------------------------------
+    def resolve(self, query: str, entity_type: str) -> ResolvedEntity | None:
+        results = self.search(query, entity_type)
+        if not results:
+            return None
+        best = results[0]
+        qid = best.get("entity_id") or best.get("id")
+        if not qid:
+            return None
+        return ResolvedEntity(
+            query=query,
+            qloo_id=qid,
+            name=best.get("name", query),
+            type=entity_type,
+            tags=_parse_tags(best),
+        )
+
+    def places_for(self, entity_ids: list[str], city: str, take: int = 40) -> list[Place]:
+        places = []
+        for raw in self.place_insights(entity_ids, city, take=take):
+            place = parse_place(raw)
+            if place is not None:
+                places.append(place)
+        return places
+
+
+# --- parsing (defensive: unknown shapes are skipped, not guessed) -------------------------
+def _results_list(data: dict[str, Any]) -> list[dict[str, Any]]:
+    res = data.get("results", data)
+    if isinstance(res, dict):
+        res = res.get("entities", [])
+    return res if isinstance(res, list) else []
+
+
+def _parse_tags(raw: dict[str, Any]) -> list[Tag]:
+    tags = []
+    for t in raw.get("tags") or []:
+        if isinstance(t, dict) and t.get("name"):
+            tags.append(
+                Tag(
+                    id=str(t.get("id") or t.get("tag_id") or t["name"]),
+                    name=t["name"],
+                    type=t.get("type"),
+                )
+            )
+    return tags
+
+
+def _category(raw: dict[str, Any], tags: list[Tag]) -> str | None:
+    for t in tags:
+        if t.type and "category" in t.type:
+            return t.name
+    sub = raw.get("subtype")
+    return sub.rsplit(":", 1)[-1].replace("_", " ") if isinstance(sub, str) else None
+
+
+def _parse_time(s: str) -> time | None:
+    m = re.search(r"(\d{1,2}):(\d{2})", s or "")
+    if not m:
+        return None
+    h, mi = int(m.group(1)), int(m.group(2))
+    return time(23, 59) if h >= 24 else time(h, mi)
+
+
+def _parse_hours(raw_hours: Any) -> dict[int, list[tuple[time, time]]] | None:
+    """Parse {"Monday": [{"opens": "T09:00", "closes": "T17:00"}], ...}. None if unknown."""
+    if not isinstance(raw_hours, dict):
+        return None
+    out: dict[int, list[tuple[time, time]]] = {}
+    for day, spans in raw_hours.items():
+        if str(day).lower() not in _WEEKDAYS or not isinstance(spans, list):
+            continue
+        idx = _WEEKDAYS.index(str(day).lower())
+        out[idx] = []
+        for span in spans:
+            if not isinstance(span, dict):
+                continue
+            o, c = _parse_time(span.get("opens", "")), _parse_time(span.get("closes", ""))
+            if o and c:
+                out[idx].append((o, c))
+    return out or None
+
+
+def parse_place(raw: dict[str, Any]) -> Place | None:
+    qid = raw.get("entity_id") or raw.get("id")
+    loc = raw.get("location") or {}
+    props = raw.get("properties") or {}
+    lat, lon = loc.get("lat") or loc.get("latitude"), loc.get("lon") or loc.get("longitude")
+    if not qid or lat is None or lon is None:
+        log.debug("skipping place without id/coords: %s", raw.get("name"))
+        return None
+    tags = _parse_tags(raw)
+    affinity = (raw.get("query") or {}).get("affinity")
+    return Place(
+        qloo_id=qid,
+        name=raw.get("name", "?"),
+        category=_category(raw, tags),
+        lat=float(lat),
+        lon=float(lon),
+        address=props.get("address"),
+        tags=tags,
+        affinity=float(affinity) if affinity is not None else None,
+        hours=_parse_hours(props.get("hours")),
+    )
