@@ -2,24 +2,25 @@
 
 ## Block 1 - Setup (1-2h)
 - [ ] Get Qloo hackathon API key (check Devpost email)
-- [ ] Public GitHub repo `tastewalk`, push scaffold, MIT shows in About
-- [ ] `uv sync`, fill `.env`
+- [x] GitHub repo `tastewalk` (private until finished), push scaffold, MIT shows in About
+- [x] `uv sync` - [ ] fill `.env` (waiting on Qloo key + LLM choice)
 - [ ] Run `scripts/smoke_test_qloo.py`; record endpoints/params in docs/research/01-qloo-api.md
 
 ## Block 2 - Core loop on CLI (5h)
-- [ ] Schemas
-- [ ] Qloo client with disk cache
-- [ ] Taste agent: resolve favorites -> insights for places in Montreal
-- [ ] Planner: order stops, walking times (haversine x detour factor; OSRM optional)
-- [ ] Critic: why-it-fits text grounded in Qloo tags
-- [ ] Baseline LLM-only itinerary
+- [x] Schemas
+- [x] Qloo client with disk cache (endpoint shapes unverified)
+- [x] Taste agent: resolve favorites -> insights for places in Montreal
+- [x] Planner: order stops, walking times (haversine x detour factor; OSRM optional)
+- [x] Critic: why-it-fits text grounded in Qloo tags
+- [x] Baseline LLM-only itinerary (untested against a real LLM)
 
 ## Block 3 - Product (5h)
-- [ ] FastAPI + SSE streaming of agent steps
-- [ ] UI: input form, map, timeline, why cards, side-by-side toggle
-- [ ] 3-4 curated example profiles, with seed cache committed to `data/seed_cache/`
+- [x] FastAPI + SSE streaming of agent steps
+- [x] UI: input form, map, timeline, why cards, side-by-side toggle
+- [x] 4 curated example profiles (`src/tastewalk/examples.py`) - [ ] check they resolve in Qloo; build seed cache committed to `data/seed_cache/`
 
 ## Block 4 - Deploy (2-3h)
+- [x] Dockerfile + render.yaml + /healthz (image tested locally)
 - [ ] Deploy publicly (Render / Fly.io / Railway free tier); verify works logged-out
 - [ ] Put demo URL in README
 
