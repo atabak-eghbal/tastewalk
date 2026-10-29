@@ -10,14 +10,14 @@
 - [ ] Schemas
 - [ ] Qloo client with disk cache
 - [ ] Taste agent: resolve favorites -> insights for places in Montreal
-- [ ] Planner: order stops, walking times (OSRM or haversine)
+- [ ] Planner: order stops, walking times (haversine x detour factor; OSRM optional)
 - [ ] Critic: why-it-fits text grounded in Qloo tags
 - [ ] Baseline LLM-only itinerary
 
 ## Block 3 - Product (5h)
 - [ ] FastAPI + SSE streaming of agent steps
 - [ ] UI: input form, map, timeline, why cards, side-by-side toggle
-- [ ] 3-4 curated example profiles
+- [ ] 3-4 curated example profiles, with seed cache committed to `data/seed_cache/`
 
 ## Block 4 - Deploy (2-3h)
 - [ ] Deploy publicly (Render / Fly.io / Railway free tier); verify works logged-out
@@ -26,9 +26,10 @@
 ## Block 5 - Polish + submit (3h)
 - [ ] README final, screenshots/GIF, honest limitations
 - [ ] Draft all submission fields in docs/devpost/
+- [ ] Flip GitHub repo to public (kept private until finished)
 - [ ] Submit with 3h buffer; recheck every required field
 
 ## Cut list (in order)
-1. Opening-hours checks
+1. Opening-hours checks (only applied when Qloo returns hours anyway)
 2. Multi-city support (keep Montreal only)
 3. Map polish -> simple list + static map

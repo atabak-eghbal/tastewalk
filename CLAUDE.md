@@ -37,11 +37,16 @@ itinerary so Qloo's value is visible. First city: Montreal.
 | - | **Baseline** | LLM only, no Qloo | Itinerary shown side by side |
 
 ### Key design decisions (do not change without discussing)
-- Qloo returns the candidates; the LLM never invents places. Every stop must carry a Qloo entity ID.
+- Qloo returns the candidates; the LLM never invents places. Every Qloo-itinerary stop must carry a Qloo entity ID.
+  The LLM-only baseline uses its own `BaselineStop` type (no Qloo ID) so this rule stays strict.
 - LLM outputs validated JSON (Pydantic), never executed code.
-- Route feasibility (distance, opening hours, total walking time) is computed in code, not trusted to the LLM.
+- Route feasibility (distance, total walking time, and opening hours *when Qloo provides them*) is computed in code,
+  not trusted to the LLM.
 - Cache every Qloo response on disk by request hash.
-- Demo must have 3-4 curated example profiles that reliably work.
+- Demo must have 3-4 curated example profiles that reliably work. Their Qloo + LLM responses are committed
+  as a seed cache (`data/seed_cache/`) so the demo survives ephemeral hosting and API outages.
+- Walking distance defaults to haversine x detour factor; OSRM is optional (the public demo server is car-only
+  and not for production traffic).
 
 ## 5. Verify before assuming
 - Base URL `https://hackathon.api.qloo.com` and header `X-Api-Key` (seen in hackathon forum posts - confirm in docs).
