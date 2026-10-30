@@ -78,10 +78,11 @@ def run(
         if baseline is not None:
             try:
                 audit = fact_check(qloo, baseline, profile, itin)
+                walk = f", {audit.walk_km} km between them" if audit.found >= 2 else ""
                 yield Event(
                     "audit",
-                    f"Qloo checked the LLM plan: {audit.found}/{audit.total} places found, "
-                    f"{audit.walk_km} km walking",
+                    f"Qloo fact-checked the LLM plan: located {audit.found} of {audit.total} "
+                    f"places{walk}",
                     audit,
                 )
             except QlooError as e:

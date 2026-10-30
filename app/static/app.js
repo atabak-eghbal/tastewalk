@@ -4,19 +4,23 @@
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const hhmm = (t) => (t || "").slice(0, 5);
+const num = (x, d = 2) => (x == null ? "–" : Number(x).toFixed(d));
 
 const STEPS = [
   ["taste", "Taste agent: matching your favorites in Qloo"],
-  ["candidates", "Taste agent: finding places that match your taste"],
+  ["candidates", "Taste agent: finding places people with your taste love"],
   ["plan", "Planner: choosing stops and the walking order"],
   ["critic", "Critic: explaining why each stop fits"],
-  ["baseline", "Baseline: asking an LLM without Qloo"],
+  ["baseline", "Baseline: asking an LLM the same question, without Qloo"],
+  ["audit", "Fact-checker: looking up the LLM's places in Qloo"],
 ];
+const EXAMPLE_ICONS = { indie: "🎸", design: "🪴", kculture: "🎬", streetwear: "👟" };
 
 let META = null;
 let map = null;
 let mapLayer = null;
 let source = null;
+let pins = [];
 
 async function init() {
   META = await fetch("/api/meta").then((r) => r.json());
@@ -24,19 +28,26 @@ async function init() {
   else if (!META.has_qloo) showBanner("Qloo key not configured: only cached example profiles will work.");
 
   $("#city").innerHTML = META.cities.map((c) => `<option>${esc(c)}</option>`).join("");
-  $("#examples").innerHTML = META.examples
-    .map((e) => `<button type="button" class="chip-btn" data-ex="${esc(e.id)}">${esc(e.label)}</button>`)
-    .join("");
+  $("#examples").innerHTML = META.examples.map((e) => `
+    <button type="button" class="ex-card" data-ex="${esc(e.id)}">
+      <span class="ex-icon" aria-hidden="true">${EXAMPLE_ICONS[e.id] || "✨"}</span>
+      <span class="ex-label">${esc(e.label)}</span>
+      <span class="ex-favs">${e.input.favorites.map((f) => esc(f.name)).join(" · ")}</span>
+    </button>`).join("");
   $("#examples").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-ex]");
-    if (b) loadExample(META.examples.find((e) => e.id === b.dataset.ex).input, true);
+    if (!b) return;
+    history.replaceState(null, "", `?example=${b.dataset.ex}`);
+    loadExample(META.examples.find((e) => e.id === b.dataset.ex).input, true);
   });
   $("#add-fav").addEventListener("click", () => addFav());
   $("#favs").addEventListener("click", (ev) => {
     if (ev.target.closest(".fav-del") && $("#favs").children.length > 1) ev.target.closest(".fav").remove();
   });
-  $("#form").addEventListener("submit", (ev) => { ev.preventDefault(); submit(); });
+  $("#form").addEventListener("submit", (ev) => { ev.preventDefault(); history.replaceState(null, "", "/"); submit(); });
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showCol(t.dataset.col)));
+  $("#timeline").addEventListener("mouseover", (ev) => highlight(ev.target.closest(".stop")?.dataset.i));
+  $("#timeline").addEventListener("mouseleave", () => highlight(null));
 
   // Shareable demo links: /?example=indie runs that profile right away.
   const exId = new URLSearchParams(location.search).get("example");
@@ -61,6 +72,9 @@ function loadExample(input, run) {
   $("#add-fav").hidden = false;
   input.favorites.forEach((f) => addFav(f.name, f.type));
   $("#start").value = hhmm(input.start_time);
+  $("#stops").value = input.max_stops;
+  document.querySelectorAll(".ex-card").forEach((c) =>
+    c.classList.toggle("active", META.examples.find((e) => e.id === c.dataset.ex)?.input === input && run));
   if (run) submit();
 }
 
@@ -72,7 +86,7 @@ function readInput() {
     city: $("#city").value,
     favorites,
     start_time: $("#start").value || "10:00",
-    max_stops: Math.min(8, Math.max(2, +$("#stops").value || 5)),
+    max_stops: Math.min(8, Math.max(2, +$("#stops").value || 6)),
   };
 }
 
@@ -82,12 +96,12 @@ function submit() {
   if (source) source.close();
   $("#go").disabled = true;
   $("#results").hidden = true;
-  renderSteps({});
+  const status = {};
+  renderSteps(status, true);
   $("#progress").hidden = false;
   $("#progress").scrollIntoView({ behavior: "smooth", block: "start" });
 
-  const status = {};
-  const result = { profile: null, candidates: [], itin: null, baseline: null };
+  const result = { profile: null, candidates: [], itin: null, baseline: null, audit: null };
   source = new EventSource("/api/plan?q=" + encodeURIComponent(JSON.stringify(input)));
   source.onmessage = (msg) => {
     const ev = JSON.parse(msg.data);
@@ -96,6 +110,8 @@ function submit() {
       finish();
     } else if (ev.step === "done") {
       result.baseline = ev.data.baseline_itinerary;
+      result.audit = ev.data.baseline_audit;
+      status.done = true;
       finish();
       renderResults(result);
     } else {
@@ -104,14 +120,15 @@ function submit() {
       if (ev.step === "candidates") result.candidates = ev.data || [];
       if (ev.step === "plan" || ev.step === "critic") result.itin = ev.data;
       if (ev.step === "baseline") result.baseline = ev.data;
+      if (ev.step === "audit") result.audit = ev.data;
       if (ev.step === "critic" && result.itin) renderResults(result); // show Qloo side early
     }
-    renderSteps(status, !META.has_llm);
+    renderSteps(status, !status.done && !status.error);
   };
   source.onerror = () => {
     if (!source) return;
     status.error = status.error || "Connection lost. Please try again.";
-    renderSteps(status);
+    renderSteps(status, false);
     finish();
   };
   function finish() {
@@ -121,32 +138,35 @@ function submit() {
   }
 }
 
-function renderSteps(status, noLlm) {
+function renderSteps(status, running) {
+  let activeShown = false;
   const items = STEPS.map(([key, label]) => {
     const done = status[key];
-    const skipped = key === "baseline" && noLlm && status.critic;
-    const cls = done ? "done" : "pending";
-    const icon = done ? "✓" : skipped ? "–" : "·";
-    const text = done || (skipped ? "Baseline skipped: no LLM configured" : label);
+    const skipped = !done && (status.done || status.error) ;
+    let cls = "pending", icon = "·";
+    if (done) { cls = "done"; icon = "✓"; }
+    else if (skipped) { cls = "skipped"; icon = "–"; }
+    else if (running && !activeShown) { cls = "active"; icon = ""; activeShown = true; }
+    const text = done || (skipped ? `${label} (skipped)` : label);
     return `<li class="${cls}"><span class="dot">${icon}</span><span>${esc(text)}</span></li>`;
   });
   if (status.error) items.push(`<li class="err"><span class="dot">!</span><span>${esc(status.error)}</span></li>`);
   $("#steps").innerHTML = items.join("");
 }
 
-function renderResults({ profile, candidates, itin, baseline }) {
+function renderResults({ profile, candidates, itin, baseline, audit }) {
   if (!itin) return;
   $("#results").hidden = false;
   renderProfile(profile);
-  const walk = itin.total_walk_minutes;
-  $("#qloo-summary").textContent =
-    `${itin.stops.length} stops · ${itin.total_km} km · about ${walk} min of walking · every stop comes from Qloo`;
+  $("#qloo-summary").innerHTML =
+    `<b>${itin.stops.length} stops</b> · <b>${itin.total_km} km</b> · about ${itin.total_walk_minutes} min on foot · every stop is a Qloo place`;
   const issues = itin.check?.issues || [];
   $("#issues").innerHTML = issues.length
     ? `<div class="issues"><b>Route check:</b> ${issues.map(esc).join("; ")}</div>` : "";
   renderTimeline(itin.stops);
-  renderMap(itin.stops, candidates);
-  renderBaseline(baseline);
+  renderMap(itin.stops, candidates, audit);
+  renderBaseline(baseline, audit);
+  renderScorecard(itin, baseline, audit);
 }
 
 function renderProfile(p) {
@@ -155,23 +175,56 @@ function renderProfile(p) {
   const miss = p.unresolved.map((n) => `<span class="chip grey strike" title="Not found in Qloo">${esc(n)}</span>`).join("");
   const tags = p.top_tags.slice(0, 10).map((t) => `<span class="chip grey">${esc(t.name)}</span>`).join("");
   $("#profile").innerHTML = `
-    <h2>Your taste profile</h2>
-    <div class="chips">${ents}${miss}</div>
-    ${tags ? `<p class="muted" style="margin:10px 0 0">Shared themes Qloo found</p><div class="chips">${tags}</div>` : ""}`;
+    <div class="profile-row">
+      <div><span class="kicker">Your taste in Qloo</span><div class="chips">${ents}${miss}</div></div>
+      ${tags ? `<div><span class="kicker muted-k">Themes your favorites share</span><div class="chips">${tags}</div></div>` : ""}
+    </div>`;
+}
+
+function renderScorecard(itin, baseline, audit) {
+  const el = $("#scorecard");
+  if (!baseline || !audit) { el.hidden = true; return; }
+  const n = itin.stops.length;
+  const withHours = itin.stops.filter((s) => s.place.hours).length;
+  const llmWalk = audit.found >= 2
+    ? `${audit.walk_km} km between the ${audit.found} it could locate${audit.longest_leg_min > 25 ? `, one leg ${audit.longest_leg_min} min` : ""}`
+    : "Unknown: Qloo can't locate enough of its stops";
+  const llmHours = audit.found
+    ? (audit.closed ? `<b class="bad">${audit.closed} closed</b> at the planned time` : `No conflicts found for the ${audit.found} located`)
+    : "Can't be checked";
+  const rows = [
+    ["Places Qloo can verify", `<b class="good">${n} of ${n}</b>, each with a Qloo ID`, `<b class="${audit.found < audit.total ? "bad" : ""}">${audit.found} of ${audit.total}</b>`],
+    ["Walking", `<b>${itin.total_km} km</b>, measured from Qloo coordinates`, llmWalk],
+    ["Opening hours", `Checked for ${withHours} of ${n} (where Qloo has hours)`, llmHours],
+    ["Taste match (Qloo affinity)", `<b>${num(audit.qloo_avg_affinity)}</b> average`, audit.avg_affinity != null ? `${num(audit.avg_affinity)} for the located places` : "–"],
+    ["Why each stop", "Qloo shows which of your favorites drove each pick", "The LLM's own opinion"],
+  ];
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sc-head">
+      <span class="kicker">The proof</span>
+      <h2>Qloo could verify <span class="good">${n}/${n}</span> of our stops and <span class="bad">${audit.found}/${audit.total}</span> of the LLM's.</h2>
+    </div>
+    <table class="sc">
+      <thead><tr><th></th><th class="q">With Qloo</th><th class="l">LLM only</th></tr></thead>
+      <tbody>${rows.map(([k, q, l]) => `<tr><th scope="row">${k}</th><td>${q}</td><td>${l}</td></tr>`).join("")}</tbody>
+    </table>
+    <p class="fine">"Not in Qloo" doesn't prove a place is made up: Qloo's coverage isn't complete. It means nobody can confirm the place, its hours or the walk before you go.</p>`;
 }
 
 function renderTimeline(stops) {
   $("#timeline").innerHTML = stops.map((s, i) => {
     const p = s.place;
-    const leg = i ? `<li class="leg">${s.walk_minutes_from_prev} min walk</li>` : "";
+    const leg = i ? `<li class="leg">🚶 ${s.walk_minutes_from_prev} min walk</li>` : "";
     const because = s.because_of.map((t) => `<span class="chip">♥ ${esc(t)}</span>`).join(" ");
     const vibe = (p.vibe || []).slice(0, 4).map((t) => `<span class="chip grey">${esc(t)}</span>`).join(" ");
-    const aff = p.affinity != null ? ` · affinity ${p.affinity.toFixed(2)}` : "";
     const where = [p.neighborhood, p.address].filter(Boolean).map(esc).join(" · ");
-    return `${leg}<li class="stop">
+    const aff = p.affinity != null
+      ? `<span class="aff" title="Qloo affinity: how strongly people with your taste favor this place"><i style="width:${Math.round(p.affinity * 100)}%"></i></span><span class="aff-n">${num(p.affinity)}</span>` : "";
+    return `${leg}<li class="stop" data-i="${i}">
       <span class="num">${i + 1}</span>
       <div class="stop-body">
-        <div class="stop-meta">${hhmm(s.arrive)}–${hhmm(s.leave)} · ${esc(p.category || "Place")}${aff}</div>
+        <div class="stop-meta"><span class="time">${hhmm(s.arrive)}–${hhmm(s.leave)}</span> · ${esc(p.category || "Place")} ${aff}</div>
         <div class="stop-head">
           <div>
             <h3>${esc(p.name)}</h3>
@@ -182,16 +235,16 @@ function renderTimeline(stops) {
         </div>
         ${s.why_it_fits ? `<div class="why"><b>Why it fits you</b>${esc(s.why_it_fits)}</div>` : ""}
         ${because || vibe ? `<div class="chips">${because} ${vibe}</div>` : ""}
-        <div class="qid">Qloo ID ${esc(p.qloo_id)}</div>
+        <div class="qid">✓ Qloo ID ${esc(p.qloo_id)}</div>
       </div></li>`;
   }).join("");
 }
 
-function renderMap(stops, candidates) {
+function renderMap(stops, candidates, audit) {
   if (!window.L) { $("#map").textContent = "Map unavailable."; return; }
   if (!map) {
     map = L.map("map", { scrollWheelZoom: false });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
   }
@@ -200,28 +253,57 @@ function renderMap(stops, candidates) {
   const chosen = new Set(stops.map((s) => s.place.qloo_id));
   const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
   candidates.filter((c) => !chosen.has(c.qloo_id)).forEach((c) =>
-    L.circleMarker([c.lat, c.lon], { radius: 4, color: "#888", weight: 1, fillOpacity: .4 })
+    L.circleMarker([c.lat, c.lon], { radius: 4, color: "#8a8178", weight: 1, fillOpacity: .35 })
       .bindTooltip(`${esc(c.name)} (Qloo match, not on route)`).addTo(mapLayer));
   const pts = stops.map((s) => [s.place.lat, s.place.lon]);
-  L.polyline(pts, { color: accent, weight: 4, opacity: .8, dashArray: "6 8" }).addTo(mapLayer);
-  stops.forEach((s, i) => {
-    const icon = L.divIcon({ className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] });
-    L.marker([s.place.lat, s.place.lon], { icon }).bindTooltip(esc(s.place.name)).addTo(mapLayer);
+  L.polyline(pts, { color: accent, weight: 4, opacity: .85, dashArray: "6 8" }).addTo(mapLayer);
+
+  const llmPts = (audit?.stops || []).filter((c) => c.found);
+  llmPts.forEach((c) => {
+    const icon = L.divIcon({ className: "", html: `<div class="pin llm">AI</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
+    L.marker([c.lat, c.lon], { icon }).bindTooltip(`LLM only: ${esc(c.qloo_name)}`).addTo(mapLayer);
+  });
+
+  pins = stops.map((s, i) => {
+    const icon = L.divIcon({ className: "", html: `<div class="pin" data-i="${i}">${i + 1}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+    return L.marker([s.place.lat, s.place.lon], { icon }).bindTooltip(esc(s.place.name))
+      .on("click", () => document.querySelector(`.stop[data-i="${i}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" }))
+      .on("mouseover", () => highlight(String(i))).on("mouseout", () => highlight(null))
+      .addTo(mapLayer);
   });
   if (pts.length) map.fitBounds(pts, { padding: [30, 30] });
   setTimeout(() => map.invalidateSize(), 50);
 }
 
-function renderBaseline(b) {
+function highlight(i) {
+  document.querySelectorAll(".pin[data-i]").forEach((p) => p.classList.toggle("hot", p.dataset.i === i));
+  document.querySelectorAll(".stop[data-i]").forEach((s) => s.classList.toggle("hot", s.dataset.i === i));
+}
+
+function renderBaseline(b, audit) {
   if (!b) {
-    $("#baseline").innerHTML = `<li class="empty">${META.has_llm ? "Waiting for the LLM-only plan…" : "No LLM configured, so there is no baseline to compare."}</li>`;
+    $("#baseline").innerHTML = `<li class="empty">${META.has_llm ? "The LLM-only plan is unavailable right now (provider limit). The Qloo plan above is complete." : "No LLM configured, so there is no baseline to compare."}</li>`;
     return;
   }
-  $("#baseline").innerHTML = b.stops.map((s) => `<li>
+  const checks = audit?.stops || [];
+  $("#baseline").innerHTML = b.stops.map((s, i) => {
+    const c = checks[i];
+    let badges = "";
+    if (c) {
+      badges = c.found
+        ? `<span class="badge ok" title="${esc(c.qloo_name)}${c.address ? " · " + esc(c.address) : ""}">✓ Located in Qloo</span>`
+        : `<span class="badge no">? Not in Qloo</span>`;
+      if (c.open === false) badges += `<span class="badge no">✗ Closed at this time</span>`;
+      if (c.walk_minutes_from_prev != null) badges += `<span class="badge ${c.walk_minutes_from_prev > 25 ? "no" : ""}">🚶 ${c.walk_minutes_from_prev} min from previous</span>`;
+      if (c.affinity != null) badges += `<span class="badge">affinity ${num(c.affinity)}</span>`;
+    }
+    return `<li>
       <div class="stop-meta">${esc(s.time || "")}${s.category ? " · " + esc(s.category) : ""}</div>
-      <h3>${esc(s.name)}<span class="unverified">unverified</span></h3>
-      ${s.why ? `<div class="muted">${esc(s.why)}</div>` : ""}
-    </li>`).join("");
+      <h3>${esc(s.name)}</h3>
+      ${badges ? `<div class="badges">${badges}</div>` : ""}
+      ${s.why ? `<div class="llm-why">${esc(s.why)}</div>` : ""}
+    </li>`;
+  }).join("");
 }
 
 function showCol(col) {

@@ -5,30 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TasteWalk</title>
 <meta name="description" content="Tell it what you love. Get a walkable day built around your taste, powered by the Qloo taste graph.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="top">
-  <div class="wrap top-inner">
+<div id="banner" class="banner" hidden></div>
+
+<header class="hero">
+  <div class="wrap">
     <a class="brand" href="/">Taste<span>Walk</span></a>
-    <p class="tagline">Tell it what you love. Get a walkable day built around your taste, not the tourist list.</p>
+    <h1>Your taste, turned into a day you can&nbsp;walk.</h1>
+    <p class="lede">Name a few things you love. Qloo's taste graph finds the places in the city that people with your taste love, our agents plan a real walking route, and then Qloo fact-checks what an AI alone would have told you.</p>
+    <div class="examples" id="examples" aria-label="Example days"></div>
   </div>
 </header>
 
-<div id="banner" class="banner" hidden></div>
-
 <main class="wrap">
   <section class="card form-card" aria-labelledby="form-h">
-    <h1 id="form-h">What do you love?</h1>
-    <p class="muted">Add a few favorites: artists, films, shows, books, brands. TasteWalk uses Qloo's taste graph to find places in the city that people with your taste love, then plans a walk.</p>
-
-    <div class="examples" id="examples" aria-label="Examples"></div>
-
+    <h2 id="form-h">Or build your own</h2>
     <form id="form" autocomplete="off">
       <div id="favs" class="favs"></div>
       <button type="button" class="link-btn" id="add-fav">+ Add a favorite</button>
-
       <div class="row opts">
         <label>City
           <select id="city"></select>
@@ -37,7 +37,7 @@
           <input type="time" id="start" value="10:00" required>
         </label>
         <label>Stops
-          <input type="number" id="stops" value="5" min="2" max="8" required>
+          <input type="number" id="stops" value="6" min="2" max="8" required>
         </label>
       </div>
       <button type="submit" class="primary" id="go">Plan my walk</button>
@@ -45,11 +45,13 @@
   </section>
 
   <section id="progress" class="card progress" hidden aria-live="polite">
+    <h2>Agents at work</h2>
     <ol id="steps"></ol>
   </section>
 
   <section id="results" hidden>
     <div id="profile" class="card profile"></div>
+    <div id="scorecard" class="card scorecard" hidden></div>
 
     <div class="tabs" role="tablist">
       <button role="tab" class="tab active" data-col="qloo" aria-selected="true">With Qloo</button>
@@ -59,18 +61,19 @@
     <div class="compare">
       <article class="col col-qloo active" data-col="qloo">
         <header class="col-h">
-          <h2>With Qloo taste graph</h2>
-          <p class="muted" id="qloo-summary"></p>
+          <span class="kicker">With Qloo taste graph</span>
+          <p id="qloo-summary"></p>
         </header>
         <div id="map" class="map" role="img" aria-label="Map of the walking route"></div>
+        <div class="legend"><span><i class="lg-pin"></i>Your route</span><span><i class="lg-llm"></i>LLM-only places Qloo could locate</span><span><i class="lg-dot"></i>Other Qloo matches</span></div>
         <div id="issues"></div>
         <ol id="timeline" class="timeline"></ol>
       </article>
 
       <article class="col col-llm" data-col="llm">
         <header class="col-h">
-          <h2>LLM only</h2>
-          <p class="muted">Same request, no Qloo. Places are not verified: no Qloo ID, no coordinates, no walking times.</p>
+          <span class="kicker llm">LLM only, fact-checked by Qloo</span>
+          <p>Same request, no Qloo. We then look up every place in Qloo to check whether it can be located, whether it is open at the planned time, and how far apart the stops are.</p>
         </header>
         <ol id="baseline" class="baseline"></ol>
       </article>
@@ -78,7 +81,7 @@
   </section>
 </main>
 
-<footer class="wrap foot muted">
+<footer class="wrap foot">
   Built for the Qloo Agentic Hackathon. Recommendations by <a href="https://www.qloo.com" rel="noopener">Qloo</a>.
   Map &copy; OpenStreetMap contributors. <a href="https://github.com/atabak-eghbal/tastewalk" rel="noopener">Source (MIT)</a>
 </footer>
