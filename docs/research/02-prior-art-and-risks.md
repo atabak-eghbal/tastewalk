@@ -42,6 +42,19 @@ These are exactly what our baseline column should show and our pipeline prevents
 | 7 | Critic LLM over-claims facts not in Qloo data. | Prompt gives only Qloo facts; template fallback. |
 | 8 | Free-tier hosting cold start (~1 min) if the ping fails. | GitHub Actions ping; check it runs. |
 
+## Probe: can Qloo audit the LLM-only plan? (verified 2026-10-30)
+- `GET /search?types=urn:entity:place` finds most LLM-named places with address + coordinates
+  (Wilensky's, Drawn & Quarterly, L'Express, Notre-Dame Basilica). Fuzzy matches can be wrong
+  ("Phonopolis" -> "La Grande Roue", "Le Saint-Edouard" -> a hotel), so a name check is required.
+- `GET /v2/insights` with `filter.results.entities=<ids>` (also `filter.entities`) scores exactly
+  those places against the user's favorites. Affinity is absolute: our route scored the same
+  (0.80-0.82) in slot calls and in this scoring call.
+- Indie example: Qloo route 0.80-0.82, LLM picks 0.76-0.81. The taste gap is small and honest;
+  the bigger gaps are existence, hours and walking distance, which Qloo coordinates let us compute.
+
+**Decision:** keep TasteWalk, add "Qloo fact-checks the LLM plan" (existence, open at the planned
+time, walking km, taste match), the step no prior Qloo itinerary project shows.
+
 ## Sources
 - https://github.com/qloo/qloo-hackathon-kit (starter/agent-chat/README.md)
 - https://devpost.com/software/tastetrip, /globetrotter-ai-2-o, /vibevoyage, /flavorjourney,
