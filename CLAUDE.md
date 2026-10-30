@@ -10,7 +10,7 @@ agent explains why each stop fits. The UI shows a side-by-side comparison agains
 itinerary so Qloo's value is visible. City: Vancouver (changed from Montreal on Oct 30, per Atabak).
 
 - **Hackathon:** Qloo Agentic Hackathon (Devpost)
-- **Deadline:** Oct 30, 2026, 11:45 PM Eastern (per Atabak; Devpost page blocked for Claude). Internal target: submit by 8:45 PM ET.
+- **Deadline:** Oct 30, 2026, 11:45 PM Eastern (per Atabak; Devpost page blocked for Claude). Internal target: submit by 10:45 PM ET. Handoff notes: docs/handoff.md.
 - **Finalists** may appear on air Nov 5 (Jason Calacanis, Cedric the Entertainer, Alex Elias) - keep availability open.
 - **Entrant:** solo. Check eligibility/location rules on Devpost (not yet verified).
 

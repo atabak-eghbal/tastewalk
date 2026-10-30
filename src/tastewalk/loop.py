@@ -95,7 +95,9 @@ def run(
         if baseline is not None:
             try:
                 audit = fact_check(qloo, baseline, profile, itin, osm=osm, osm_known=FROZEN_OSM)
-                nowhere = f", {audit.nowhere} found nowhere" if audit.nowhere else ""
+                nowhere = (
+                    f", {audit.nowhere} not found in Qloo or OpenStreetMap" if audit.nowhere else ""
+                )
                 yield Event(
                     "audit",
                     f"Fact-checked the LLM plan: Qloo located {audit.found} of {audit.total} "
