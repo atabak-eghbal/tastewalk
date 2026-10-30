@@ -117,3 +117,24 @@ def test_day_order_pins_coffee_and_drinks_when_cheap():
     bar = _p("bar", 45.522, -73.580)
     cafe.slot, shop.slot, bar.slot = "coffee", "shopping", "drinks"
     assert [p.qloo_id for p in order_by_day([bar, shop, cafe])] == ["cafe", "shop", "bar"]
+
+
+def test_llm_rate_limit_falls_back_to_qloo_only(qloo, tmp_path):
+    """A 429 from the LLM provider must not break the run: Qloo itinerary still ships."""
+    from openai import OpenAI
+
+    from tastewalk.llm import LLM
+
+    llm = LLM("k", "http://llm.test/v1", "m", DiskCache(tmp_path / "llm"))
+    llm._client = OpenAI(
+        api_key="k",
+        base_url="http://llm.test/v1",
+        max_retries=0,
+        http_client=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(429))),
+    )
+    user = UserInput(favorites=[Favorite(name="Arcade Fire", type=FavoriteType.artist)])
+    events = list(run(user, qloo, llm))
+    assert events[-1].step == "done"
+    assert events[-1].data.qloo_itinerary.stops
+    assert events[-1].data.baseline_itinerary is None
+    assert all(s.why_it_fits for s in events[-1].data.qloo_itinerary.stops)

@@ -6,12 +6,13 @@ import json
 import logging
 from typing import TypeVar
 
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ValidationError
 
 from .cache import DiskCache, request_key
 
 log = logging.getLogger(__name__)
+TIMEOUT_S = 40  # a stalled call must not freeze the demo; callers fall back without the LLM
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -23,7 +24,11 @@ class LLM:
     def __init__(self, api_key: str, base_url: str, model: str, cache: DiskCache):
         self.model = model
         self.cache = cache
-        self._client = OpenAI(api_key=api_key, base_url=base_url) if api_key else None
+        self._client = (
+            OpenAI(api_key=api_key, base_url=base_url, timeout=TIMEOUT_S, max_retries=1)
+            if api_key
+            else None
+        )
 
     def json(self, system: str, user: str, schema: type[T], retries: int = 1) -> T:
         """Ask for JSON matching `schema`; validate it; retry once with the error on failure."""
@@ -41,12 +46,15 @@ class LLM:
 
         last_err: Exception | None = None
         for _ in range(retries + 1):
-            resp = self._client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                response_format={"type": "json_object"},
-                temperature=0.4,
-            )
+            try:
+                resp = self._client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    response_format={"type": "json_object"},
+                    temperature=0.4,
+                )
+            except OpenAIError as e:  # rate limit, timeout, outage: callers fall back
+                raise LLMError(f"LLM call failed: {type(e).__name__}: {e}") from e
             text = resp.choices[0].message.content or ""
             try:
                 obj = schema.model_validate_json(_strip_fences(text))
