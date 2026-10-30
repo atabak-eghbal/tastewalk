@@ -1,166 +1,205 @@
 {
  "date": "2026-10-30",
- "commit": "1133bab",
+ "city": "Vancouver",
+ "commit": "4a25b43",
  "llm_model": "openai/gpt-oss-120b (Groq)",
- "note": "LLM-only plans are frozen in src/tastewalk/example_baselines.json. Place names are LLM output; no Qloo response data is stored here (Qloo terms).",
+ "note": "LLM-only plans are frozen in src/tastewalk/example_baselines.json. Place names are LLM output; no Qloo response data is stored here (Qloo terms). Walking is estimated (straight line x 1.3).",
  "totals": {
-  "stops": 24,
-  "qloo": 4,
-  "chain": 2,
-  "osm_only": 8,
-  "nowhere": 12,
-  "closed": 0
+  "llm_stops": 24,
+  "located_in_qloo": 11,
+  "chain_unclear": 0,
+  "openstreetmap_only": 6,
+  "found_in_neither": 7,
+  "closed_at_planned_time": 1,
+  "tastewalk_stops": 24,
+  "tastewalk_with_hours": 18
  },
  "rows": [
   {
    "example": "indie",
    "tastewalk_stops": 6,
-   "tastewalk_km_estimated": 4.15,
-   "tastewalk_stops_with_hours": 5,
+   "tastewalk_km_estimated": 3.09,
+   "tastewalk_longest_leg_min": 15,
+   "tastewalk_stops_with_hours": 4,
+   "llm_km_between_located": 18.43,
+   "llm_longest_leg_min": 72,
    "llm_stops": [
     {
-     "name": "Le Saint-Sulpice",
-     "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Café Olimpico",
-     "verdict": "chain_branch_unclear",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Phonopolis Vinyl Record Store",
-     "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Le Balcon du Musée des beaux-arts de Montréal",
-     "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Parc du Mont-Royal – Belvédère Kondiaronk",
-     "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Cinéma du Parc",
+     "name": "Revolver Coffee",
      "verdict": "located_in_qloo",
-     "open_at_planned_time": null
+     "open_at_planned_time": true,
+     "walk_min_from_previous": null
+    },
+    {
+     "name": "Red Cat Records",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": true,
+     "walk_min_from_previous": 72
+    },
+    {
+     "name": "The Orpheum",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": false,
+     "walk_min_from_previous": 70
+    },
+    {
+     "name": "Granville Island Public Market",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": true,
+     "walk_min_from_previous": 23
+    },
+    {
+     "name": "Vancouver Art Gallery",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": true,
+     "walk_min_from_previous": 27
+    },
+    {
+     "name": "The Biltmore Cabaret",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": null,
+     "walk_min_from_previous": 53
     }
    ]
   },
   {
    "example": "design",
    "tastewalk_stops": 6,
-   "tastewalk_km_estimated": 3.78,
-   "tastewalk_stops_with_hours": 6,
+   "tastewalk_km_estimated": 4.34,
+   "tastewalk_longest_leg_min": 20,
+   "tastewalk_stops_with_hours": 4,
+   "llm_km_between_located": 2.3,
+   "llm_longest_leg_min": 29,
    "llm_stops": [
     {
-     "name": "Aesop Boutique – Rue Saint-Paul",
+     "name": "Aesop Vancouver",
      "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Muji Montréal – Rue Saint‑Denis",
-     "verdict": "found_in_neither",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Café Olimpico – Mile End",
-     "verdict": "chain_branch_unclear",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Marché Jean‑Talon",
+     "name": "Muji Vancouver",
      "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Le Bremner – Old Port",
-     "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "name": "Granville Island Public Market",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": true,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Atelier de cuisine – La Guilde Culinaire",
+     "name": "Hawksworth Restaurant",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": true,
+     "walk_min_from_previous": 29
+    },
+    {
+     "name": "Vancouver Art Gallery – Minimalist Design Exhibit",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": true,
+     "walk_min_from_previous": 2
+    },
+    {
+     "name": "49th Parallel Café",
      "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     }
    ]
   },
   {
-   "example": "kculture",
+   "example": "anime",
    "tastewalk_stops": 6,
-   "tastewalk_km_estimated": 3.88,
-   "tastewalk_stops_with_hours": 6,
+   "tastewalk_km_estimated": 2.89,
+   "tastewalk_longest_leg_min": 10,
+   "tastewalk_stops_with_hours": 5,
+   "llm_km_between_located": 2.03,
+   "llm_longest_leg_min": 27,
    "llm_stops": [
     {
-     "name": "K-Pop Café K-Box",
-     "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "name": "Miku Japanese Garden",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Korean Cultural Centre of Montreal",
+     "name": "Anime Expo Vancouver (pop‑up)",
      "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Miyako Korean BBQ",
-     "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "name": "The Vinyl Cafe",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Gentle Monster Pop‑up at Rue Saint‑Laurent",
-     "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "name": "Gastown Steam Clock",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Cinema du Parc – Korean Film Night",
+     "name": "Vancouver Art Gallery – Japanese Art Exhibit",
      "verdict": "located_in_qloo",
-     "open_at_planned_time": null
+     "open_at_planned_time": true,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Street Art Mural at Rue Saint‑Denis",
-     "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "name": "Granville Island Public Market – Ramen & Matcha Bar",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": true,
+     "walk_min_from_previous": 27
     }
    ]
   },
   {
    "example": "streetwear",
    "tastewalk_stops": 6,
-   "tastewalk_km_estimated": 2.69,
-   "tastewalk_stops_with_hours": 6,
+   "tastewalk_km_estimated": 4.45,
+   "tastewalk_longest_leg_min": 22,
+   "tastewalk_stops_with_hours": 5,
+   "llm_km_between_located": 0.0,
+   "llm_longest_leg_min": 0,
    "llm_stops": [
     {
-     "name": "Le Saint-Sulpice Hip-Hop Lounge",
+     "name": "The Roxy",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
+    },
+    {
+     "name": "Nike Vancouver Store (Pacific Centre)",
      "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Le 5e Boutique",
+     "name": "Supreme Vancouver Pop‑up",
      "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Nike Montreal Flagship",
-     "verdict": "openstreetmap_only",
-     "open_at_planned_time": null
-    },
-    {
-     "name": "Street Art Walk on Rue Saint-Laurent",
+     "name": "Memento Coffee",
      "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Cafe Le Petit Boulanger",
+     "name": "Mount Pleasant Murals",
      "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     },
     {
-     "name": "Bar Le Saint-Claude (Atlanta Night)",
+     "name": "The Southern Bar",
      "verdict": "found_in_neither",
-     "open_at_planned_time": null
+     "open_at_planned_time": null,
+     "walk_min_from_previous": null
     }
    ]
   }

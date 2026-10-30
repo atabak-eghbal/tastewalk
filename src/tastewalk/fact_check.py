@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, time, timedelta
 
 from .osm import OSMClient
-from .qloo import CITY_CENTERS, PLACE_TYPE, QlooClient, parse_place
+from .qloo import CITY_CENTERS, PLACE_TYPE, QlooClient, city_today, parse_place
 from .routing import haversine_km, is_open, path_km, walk_minutes
 from .schemas import BaselineAudit, BaselineItinerary, Itinerary, Place, StopCheck, TasteProfile
 
@@ -23,7 +23,7 @@ MAX_KM_FROM_CENTER = 25.0
 DEFAULT_VISIT_MIN = 60
 # Words that say what a place is, not which place it is: never enough for a match on their own.
 _GENERIC_WORDS = (
-    "the a an and et of le la les l de du des d montreal mtl inc "
+    "the a an and et of le la les l de du des d vancouver yvr montreal mtl inc "
     "cafe coffee restaurant bar pub store shop boutique record records bookstore book books librairie museum musee park "
     "parc gallery galerie market marche brasserie bistro bakery boulangerie club"
 )
@@ -174,7 +174,7 @@ def fact_check(
     osm_known: dict[str, bool] | None = None,
 ) -> BaselineAudit:
     """osm_known: recorded OpenStreetMap verdicts by place name (the examples), used first."""
-    weekday = (day or date.today()).weekday()
+    weekday = (day or city_today(baseline.city)).weekday()
     with ThreadPoolExecutor(max_workers=6) as pool:
         lookups = list(
             pool.map(lambda s: find_place(qloo, s.name, baseline.city, s.category), baseline.stops)

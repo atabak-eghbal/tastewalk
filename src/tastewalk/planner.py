@@ -15,6 +15,7 @@ from datetime import date
 from pydantic import BaseModel
 
 from .llm import LLM, LLMError
+from .qloo import city_today
 from .routing import is_open, order_day, path_km, schedule, walk_km
 from .schemas import Itinerary, Place, TasteProfile, UserInput
 from .taste_agent import SLOT_ORDER
@@ -22,6 +23,7 @@ from .taste_agent import SLOT_ORDER
 log = logging.getLogger(__name__)
 
 POOL_RADIUS_KM = 1.2
+NEARBY_KM = 0.6  # extra candidates this close to the pool can fill a missing kind of stop
 DAY_ORDER_MAX_DETOUR = 1.3  # accept day-rhythm order if <= 30% longer than shortest
 POOL_SIZE = 20
 MAX_PER_CATEGORY = 2
@@ -95,8 +97,8 @@ def kind(p: Place) -> str:
 def balance(chosen: list[Place], pool: list[Place], n: int) -> list[Place]:
     """A day's rhythm: one coffee, one meal and one drinks stop when the pool has them (two
     coffees and meals from 7 stops); the rest culture and shopping; no chains. The planner's own
-    picks come first. Relaxes the quotas only if the pool runs out. Slots are relabelled from the
-    category, so a restaurant is never the "coffee" stop."""
+    picks come first. Never breaks the quotas: a shorter day beats three restaurants in a row.
+    Slots are relabelled from the category, so a restaurant is never the "coffee" stop."""
     cap = 2 if n >= 7 else 1
     quota = {"meal": cap, "drinks": 1, "coffee": cap}
     options = [p for p in [*chosen, *pool] if not is_chain(p)]
@@ -114,7 +116,6 @@ def balance(chosen: list[Place], pool: list[Place], n: int) -> list[Place]:
             continue
         kept.append(p)
         count[k] += 1
-    kept += [p for p in options if p not in kept][: n - len(kept)]
     return [_relabel(p) for p in kept]
 
 
@@ -227,7 +228,13 @@ def schedule_open(chosen: list[Place], pool: list[Place], user: UserInput, day: 
             return stops, check
         bad = closed.place
         taken = {kind(p) for p in chosen if p is not bad} - {"other"}
-        spares = [p for p in pool if p not in chosen and not is_chain(p)]
+        spares = [
+            p
+            for p in pool
+            if p not in chosen
+            and not is_chain(p)
+            and (kind(p) == kind(bad) or kind(p) not in taken)
+        ]
         spares.sort(key=lambda p: (kind(p) != kind(bad), kind(p) in taken, -(p.affinity or 0)))
         fit = next(
             (
@@ -263,9 +270,17 @@ def plan(
     if len(chosen) < min(n, len(pool)):
         extra = [p for p in pick_deterministic(pool, len(pool)) if p not in chosen]
         chosen += extra[: n - len(chosen)]
+    # Fill from the compact pool first, then from other candidates a short walk from it.
+    nearby = [
+        c
+        for c in candidates
+        if c not in pool and pool and min(walk_km(c, p) for p in pool) <= NEARBY_KM
+    ]
+    nearby.sort(key=lambda p: -(p.affinity or 0))
+    pool = pool + nearby
     chosen = balance(chosen, pick_deterministic(pool, len(pool)), n)
     pool = [_relabel(p) for p in pool]
-    stops, check = schedule_open(chosen, pool, user, day or date.today())
+    stops, check = schedule_open(chosen, pool, user, day or city_today(user.city))
     return Itinerary(
         city=user.city,
         start_time=user.start_time,

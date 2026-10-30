@@ -3,18 +3,18 @@
 <!-- Numbers come from docs/results/fact_check_examples.json. Keep claims verifiable. -->
 
 **Elevator pitch (≤200 chars):**
-Turn what you love into a walkable Montreal day from Qloo's taste graph, then fact-check an AI-only plan: half the places it named couldn't be found in Qloo or OpenStreetMap.
+Turn what you love into a walkable Vancouver day from Qloo's taste graph, then fact-check an AI-only plan. One example: an 18 km "walk" with a closed stop vs our 3 km.
 
 ## Inspiration
-Every "things to do in Montreal" list is the same: the same basilica, the same bagel shops, the
-same market. Ask a general-purpose AI and you get that list back, reworded, and studies of AI
+Every "things to do in Vancouver" list is the same: Granville Island, the Art Gallery, the
+same steam clock. Ask a general-purpose AI and you get that list back, reworded, and studies of AI
 trip plans keep finding places that don't exist, stops scheduled while they're closed, and stops
 far apart. The best days in a new city happen when a friend who *gets* your taste walks you
 around. We wanted to build that friend, and to prove it beats the AI-only answer rather than claim it.
 
 ## What it does
 TasteWalk turns the things you already love (artists, films, shows, books, brands) into a
-walkable day in the city:
+walkable day in Vancouver:
 
 - **Your taste in Qloo**: each favorite is matched to a Qloo entity, with the themes they share.
 - **Places that fit**: Qloo recommends places in the city that people with your taste love, for
@@ -27,19 +27,23 @@ walkable day in the city:
   place it named in Qloo, then OpenStreetMap: can it be found, is it open at the planned time,
   how far apart are the stops. A scorecard puts both plans side by side.
 
-Try it: open the live demo and click an example card, e.g. "K-pop & Korean film".
+Try it: open the live demo and click an example card, e.g. "Indie music & arthouse film".
 
-## Results (4 example profiles, Oct 30; LLM-only plans recorded so the demo matches)
-| | TasteWalk (Qloo) | LLM only |
+## Results (4 example profiles in Vancouver, Oct 30; LLM-only plans recorded so the demo matches)
+**Clearest case (indie music & arthouse film):** Qloo located all 6 places the LLM named, all
+real. But the LLM's "walking day" is 18.4 km with 72-, 70- and 53-minute legs, and the Orpheum is
+closed when you'd arrive. TasteWalk: 3.1 km, no leg over 15 minutes.
+
+| Across the 4 examples | TasteWalk (Qloo) | LLM only |
 |---|---|---|
-| Can the place be found? | 24 of 24 Qloo places (by construction) | 4 in Qloo (2 chains, branch unclear) · 8 only on OpenStreetMap · **12 in neither** |
-| Opening hours at the planned time | checked for 23 of 24 | checkable for at most 2 |
-| Walking | estimated for every leg | can't be estimated for most stops |
+| Can the place be found? | 24 of 24 Qloo places (by construction) | 11 in Qloo · 6 only on OpenStreetMap · 7 in neither |
+| Walking | 2.9-4.5 km per day, longest leg 22 min | indie 18.4 km, longest leg 72 min |
+| Same tourist spots? | 24 stops across 4 tastes | Granville Island Market and the Art Gallery in 3 of 4 plans |
 | Why each stop | which of your favorites drove it (Qloo explainability) | the LLM's own words |
 
 "Found in neither" doesn't prove a place is invented (both sources have gaps), and the app says
-so. It means nobody can confirm the place, its hours or the walk before you go. Every LLM-named
-place and its verdict is in the repo (docs/results/fact_check_examples.json).
+so. Every LLM-named place, its verdict and its walking legs are in the repo
+(docs/results/fact_check_examples.json).
 
 ## How we built it
 - **Taste agent**: Qloo `GET /search` resolves each favorite to an entity. Qloo `GET /v2/insights`
@@ -75,7 +79,8 @@ categories, hours), and insights restricted to specific entities to audit anothe
   ambience tags), so tag overlap was useless. Qloo's explainability feature turned out to be the
   answer: it reports how much each favorite drove each recommendation.
 - **Fair fact-checking**: Qloo's search is fuzzy ("Phonopolis" returned a Ferris wheel), and our
-  own simulated judges caught our first matcher calling "Atwater Market" closed because it
+  own simulated judges caught our first matcher (while we prototyped in Montreal) calling
+  "Atwater Market" closed because it
   matched a cocktail bar. We now match names strictly, mark chains as unclear, and check
   OpenStreetMap before saying a place can't be found. "Not in Qloo" is never "made up".
 - **Days that make sense**: Qloo categories are fine-grained ("Italian restaurant", "Steak
@@ -89,7 +94,7 @@ categories, hours), and insights restricted to specific entities to audit anothe
 
 ## Who it's for
 - **Visitors and locals**: a day that feels picked by a friend who shares your taste.
-- **Destination marketers (e.g. Tourisme Montréal), hotels and concierge apps**: embed it as a
+- **Destination marketers (e.g. Destination Vancouver), hotels and concierge apps**: embed it as a
   "local friend" itinerary that routes visitors past the top-10 list to independent places,
   each recommendation explainable. The same Qloo insights run in reverse answer "which visitors
   would love this neighbourhood or business?".

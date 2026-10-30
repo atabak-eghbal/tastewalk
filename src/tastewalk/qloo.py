@@ -15,9 +15,10 @@ import difflib
 import logging
 import re
 import unicodedata
-from datetime import time
+from datetime import date, datetime, time
 from time import sleep
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -34,9 +35,17 @@ PLACE_TYPE = "urn:entity:place"
 
 # Rough city centres; used for a location filter (point + radius) and as a sanity bound.
 CITY_CENTERS: dict[str, tuple[float, float]] = {
+    "vancouver": (49.2820, -123.1180),  # downtown: Gastown, Chinatown, Yaletown, West End
     "montreal": (45.5048, -73.5772),  # around Plateau / downtown
 }
 DEFAULT_RADIUS_M = 4000
+CITY_TZ = {"vancouver": "America/Vancouver", "montreal": "America/Toronto"}
+
+
+def city_today(city: str) -> date:
+    """Today in the city (opening hours are local; the server runs in UTC)."""
+    return datetime.now(ZoneInfo(CITY_TZ.get(city.lower(), "UTC"))).date()
+
 
 _WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 

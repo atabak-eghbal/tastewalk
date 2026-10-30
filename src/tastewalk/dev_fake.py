@@ -1,7 +1,7 @@
 """DEVELOPMENT ONLY: a fake Qloo server for tests and for building the UI without an API key.
 
 Enabled in the web app only with TASTEWALK_FAKE_QLOO=1, and the UI shows a "demo data" banner.
-The places are fictional ("Test ..."), placed around the Plateau / Mile End so the map looks
+The places are fictional ("Test ..."), placed around downtown Vancouver so the map looks
 right. Response shapes follow what qloo.py assumes; update both once the real API is confirmed.
 """
 
@@ -19,17 +19,17 @@ _DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "su
 
 # id, name, category, lat, lon, affinity
 FAKE_PLACES = [
-    ("P1", "Test Cafe A", "Cafe", 45.5230, -73.5810, 0.95),
-    ("P2", "Test Records", "Record store", 45.5245, -73.5835, 0.91),
-    ("P3", "Test Gallery", "Art gallery", 45.5190, -73.5760, 0.88),
-    ("P4", "Test Bistro", "Restaurant", 45.5215, -73.5790, 0.86),
-    ("P5", "Test Cafe B", "Cafe", 45.5250, -73.5800, 0.84),
-    ("P6", "Test Cafe C", "Cafe", 45.5260, -73.5820, 0.83),
-    ("P7", "Test Bar", "Bar", 45.5200, -73.5820, 0.80),
-    ("P8", "Test Bookshop", "Book store", 45.5272, -73.5890, 0.79),
-    ("P9", "Test Park", "Park", 45.5155, -73.5800, 0.77),
-    ("P10", "Test Market", "Market", 45.5320, -73.6145, 0.75),
-    ("FAR", "Far Away Place", "Bar", 45.70, -73.90, 0.99),  # outside the city radius
+    ("P1", "Test Cafe A", "Cafe", 49.3002, -123.1218, 0.95),
+    ("P2", "Test Records", "Record store", 49.3017, -123.1243, 0.91),
+    ("P3", "Test Gallery", "Art gallery", 49.2962, -123.1168, 0.88),
+    ("P4", "Test Bistro", "Restaurant", 49.2987, -123.1198, 0.86),
+    ("P5", "Test Cafe B", "Cafe", 49.3022, -123.1208, 0.84),
+    ("P6", "Test Cafe C", "Cafe", 49.3032, -123.1228, 0.83),
+    ("P7", "Test Bar", "Bar", 49.2972, -123.1228, 0.80),
+    ("P8", "Test Bookshop", "Book store", 49.3044, -123.1298, 0.79),
+    ("P9", "Test Park", "Park", 49.2927, -123.1208, 0.77),
+    ("P10", "Test Market", "Market", 49.3092, -123.1553, 0.75),
+    ("FAR", "Far Away Place", "Bar", 49.4772, -123.4408, 0.99),  # outside the city radius
 ]
 
 
@@ -52,7 +52,7 @@ def place_json(
         "location": {"lat": lat, "lon": lon},
         "properties": {
             "address": "1 Test St",
-            "neighborhood": "Test Plateau",
+            "neighborhood": "Test Gastown",
             "short_description": f"A fictional {cat.lower()} used for testing.",
             "is_closed": False,
             "hours": {

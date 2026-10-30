@@ -7,7 +7,7 @@
 into a walkable, personalized day itinerary. A multi-agent workflow uses the **Qloo taste graph**
 to build a taste profile and find matching places, plans a realistic walking route, and a critic
 agent explains why each stop fits. The UI shows a side-by-side comparison against an LLM-only
-itinerary so Qloo's value is visible. First city: Montreal.
+itinerary so Qloo's value is visible. City: Vancouver (changed from Montreal on Oct 30, per Atabak).
 
 - **Hackathon:** Qloo Agentic Hackathon (Devpost)
 - **Deadline:** Oct 30, 2026, 11:45 PM Eastern (per Atabak; Devpost page blocked for Claude). Internal target: submit by 8:45 PM ET.

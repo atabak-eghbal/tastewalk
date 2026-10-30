@@ -8,7 +8,7 @@
   <a href="docs/architecture.md">Architecture</a>
 </p>
 
-Built for the **Qloo Agentic Hackathon 2026**. First city: Montreal.
+Built for the **Qloo Agentic Hackathon 2026**. City: Vancouver.
 
 > The demo runs on a free plan: if it was asleep, the first load can take about a minute.
 
@@ -16,7 +16,7 @@ Built for the **Qloo Agentic Hackathon 2026**. First city: Montreal.
 
 ## What it does
 You enter a few favorites (artists, films, shows, books, brands). Then:
-1. **Taste agent** resolves each favorite to a Qloo entity and asks Qloo for places in Montreal
+1. **Taste agent** resolves each favorite to a Qloo entity and asks Qloo for places in Vancouver
    that people with that taste love, for each part of the day.
 2. **Planner agent** picks a varied day (one coffee, one meal, drinks last, no chains) by Qloo ID,
    orders it as a walk, schedules real times and swaps out places closed on arrival.
@@ -27,25 +27,30 @@ You enter a few favorites (artists, films, shows, books, brands). Then:
    OpenStreetMap, and checks hours and walking for those it can locate.
 
 ## The proof
-Four example profiles (Oct 30; the LLM-only plans are
+Four example profiles in Vancouver (Oct 30; the LLM-only plans are
 [frozen](src/tastewalk/example_baselines.json) so the demo shows the same numbers), from
 [docs/results/fact_check_examples.json](docs/results/fact_check_examples.json), which lists
-every LLM-named place and its verdict:
+every LLM-named place, its verdict and its walking legs.
 
-| | TasteWalk (Qloo) | LLM only |
+**The clearest case (indie music & arthouse film):** Qloo located all 6 places the LLM named:
+real, well-known spots. But the LLM's "walking day" is **18.4 km on foot, with 72-, 70- and
+53-minute legs**, and the Orpheum is **closed** when you'd arrive. TasteWalk's day is 3.1 km and
+no leg is over 15 minutes.
+
+| Across the 4 examples | TasteWalk (Qloo) | LLM only |
 |---|---|---|
-| Stops | 24 Qloo places, each with an ID, address and coordinates | 24 named places |
-| Can the place be found? | all 24 (by construction) | **4** in Qloo (2 are chains, branch unclear) · **8** only on OpenStreetMap · **12 in neither** |
-| Opening hours at the planned time | checked for 23 of 24 | checkable for at most 2 |
-| Walking | estimated for every leg (2.7-4.2 km per day) | can't be estimated for most stops |
+| Can the place be found? | 24 of 24 Qloo places (by construction) | **11** in Qloo · **6** only on OpenStreetMap · **7 in neither** |
+| Walking | 2.9-4.5 km per day, longest leg 22 min | indie: 18.4 km, longest leg 72 min; others can't be estimated for most stops |
+| Open at the planned time | checked for 18 of 24 (where Qloo has hours), swaps out closed stops | 1 closed; most can't be checked |
+| Same tourist spots? | 24 stops across 4 tastes | Granville Island Public Market and the Vancouver Art Gallery in 3 of 4 plans |
 | Why each stop | which of your favorites drove the pick (Qloo explainability) | the LLM's own words |
 
 The first column is grounded by construction: that is the point. The question is what you get
-without Qloo. "Found in neither" doesn't prove a place is invented (both sources have gaps, e.g.
-Le Bremner, a real restaurant, is in neither); it means nobody can confirm the place, its hours or
-the walk before you go. Matching is strict on purpose (a wrong match would make false claims), so
-some real places are missed. We dropped a taste-match comparison: on the few LLM places Qloo could
-locate, Qloo's affinity was similar to our picks, so it showed nothing.
+without Qloo. "Found in neither" doesn't prove a place is invented (both sources have gaps; e.g.
+The Roxy, a real club, wasn't found); it means nobody can confirm the place, its hours or the walk
+before you go. Matching is strict on purpose (a wrong match would make false claims), so some real
+places are missed. We dropped a taste-match comparison: Qloo's affinity for the LLM's located
+places was similar to our picks, so it showed nothing.
 
 ## What makes it Qloo-powered
 Every stop on the TasteWalk route comes from Qloo and carries a Qloo entity ID. The LLM can only
@@ -121,9 +126,10 @@ The repo ships a `Dockerfile` and a `render.yaml` blueprint.
 A GitHub Actions job pings `/healthz` every 10 minutes (set the repo variable `DEMO_URL`).
 
 ## Honest limitations
-- **Montreal only** for now; the city centre and search radius are configured in code.
+- **Vancouver only** in the demo; a city is a centre, radius, timezone and map box in code
+  (Montreal is configured too).
 - **Walking distance** is an estimate: straight-line distance x 1.3, not street routing.
-- **Opening hours** are checked only when Qloo returns them (23 of the 24 example stops).
+- **Opening hours** are checked only when Qloo returns them (18 of the 24 example stops).
 - **Time at each stop** uses simple per-category estimates.
 - **Qloo coverage**: some real places aren't in Qloo, so the fact-checker says "not in Qloo",
   never "doesn't exist". Name matching is strict on purpose and can miss a real match.

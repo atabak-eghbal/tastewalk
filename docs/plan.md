@@ -9,7 +9,7 @@
 ## Block 2 - Core loop on CLI (5h)
 - [x] Schemas
 - [x] Qloo client with disk cache (endpoint shapes unverified)
-- [x] Taste agent: resolve favorites -> insights for places in Montreal
+- [x] Taste agent: resolve favorites -> insights for places in the city (Vancouver)
 - [x] Planner: order stops, walking times (haversine x detour factor; OSRM optional)
 - [x] Critic: why-it-fits text grounded in Qloo tags
 - [x] Baseline LLM-only itinerary (untested against a real LLM)
@@ -32,5 +32,5 @@
 
 ## Cut list (in order)
 1. Opening-hours checks (only applied when Qloo returns hours anyway)
-2. Multi-city support (keep Montreal only)
+2. Multi-city support (demo is Vancouver only)
 3. Map polish -> simple list + static map

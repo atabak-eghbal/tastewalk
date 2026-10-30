@@ -1,7 +1,7 @@
 """Command-line entry point: run the full pipeline and print the itinerary.
 
 Example:
-  uv run python -m tastewalk.cli --fav "Radiohead:artist" --fav "Amelie:movie" --city Montreal
+  uv run python -m tastewalk.cli --fav "Radiohead:artist" --fav "Amelie:movie" --city Vancouver
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ def _parse_fav(s: str) -> Favorite:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("--fav", type=_parse_fav, action="append", required=True)
-    ap.add_argument("--city", default="Montreal")
+    ap.add_argument("--city", default="Vancouver")
     ap.add_argument("--start", default="10:00")
     ap.add_argument("--stops", type=int, default=None)
     ap.add_argument("--no-baseline", action="store_true")

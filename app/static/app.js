@@ -17,7 +17,7 @@ const STEPS = [
   ["baseline", "Baseline: asking an LLM the same question, without Qloo"],
   ["audit", "Fact-checker: looking up the LLM's places in Qloo"],
 ];
-const EXAMPLE_ICONS = { indie: "🎸", design: "🪴", kculture: "🎬", streetwear: "👟" };
+const EXAMPLE_ICONS = { indie: "🎸", design: "🪴", anime: "🎮", streetwear: "👟" };
 
 let META = null;
 let map = null;
@@ -204,8 +204,9 @@ function renderScorecard(itin, baseline, audit) {
   const llmHours = !audit.found ? "Can't be checked: no stop is in Qloo"
     : !audit.hours_checked ? `Unknown: Qloo has no hours for the ${audit.found} located`
     : `${audit.hours_checked} checked${audit.closed ? `, <b class="bad">${audit.closed} closed</b> at the planned time` : ", none closed"}${unknownHours > 0 ? ` · ${unknownHours} unknown` : ""}`;
+  const longWalk = audit.found >= 2 && (audit.walk_km > 1.5 * itin.total_km || audit.longest_leg_min > 30);
   const llmWalk = audit.found >= 2 && audit.walk_km > 0
-    ? `Only between the located stops: ${audit.walk_km} km${audit.longest_leg_min > 25 ? `, one leg ${audit.longest_leg_min} min` : ""}`
+    ? `${longWalk ? `<b class="bad">${audit.walk_km} km</b>` : `${audit.walk_km} km`}${audit.found < t ? ` between the ${audit.found} located` : ""}${audit.longest_leg_min > 25 ? `, one leg <b class="bad">${audit.longest_leg_min} min</b>` : ""}`
     : "Can't be estimated: too few stops can be located";
   const rows = [
     ["The places", `<b class="good">${n} Qloo places</b>, each with a Qloo ID, address and coordinates`, llmPlaces],
@@ -213,8 +214,13 @@ function renderScorecard(itin, baseline, audit) {
     ["Walking", `<b>${itin.total_km} km</b> (estimated: straight line x 1.3)`, llmWalk],
     ["Why each stop", "Qloo says which of your favorites drove each pick", "The LLM's own words"],
   ];
-  const head = audit.nowhere
-    ? `The AI-only plan named <span class="bad">${audit.nowhere} of ${t}</span> places we couldn't find in Qloo or OpenStreetMap. Every TasteWalk stop is a real Qloo place.`
+  // Lead with the problems the fact-check actually found, most concrete first.
+  const problems = [];
+  if (longWalk) problems.push(`<span class="bad">${num(audit.walk_km, 1)} km</span> of walking${audit.longest_leg_min > 30 ? ` with a <span class="bad">${audit.longest_leg_min}-minute</span> leg` : ""} (ours: ${num(itin.total_km, 1)} km)`);
+  if (audit.closed) problems.push(`<span class="bad">${audit.closed}</span> ${audit.closed === 1 ? "stop" : "stops"} closed when you'd arrive`);
+  if (audit.nowhere) problems.push(`<span class="bad">${audit.nowhere} of ${t}</span> places we couldn't find in Qloo or OpenStreetMap`);
+  const head = problems.length
+    ? `The AI-only plan: ${problems.join(", ")}.`
     : `Qloo could check <span class="bad">${audit.found} of ${t}</span> AI-only stops, and <span class="good">${n} of ${n}</span> TasteWalk stops.`;
   el.hidden = false;
   el.innerHTML = `

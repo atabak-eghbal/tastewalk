@@ -42,14 +42,14 @@ EXAMPLES: dict[str, dict] = {
             start_time=time(10, 0),
         ),
     },
-    "kculture": {
-        "label": "K-pop & Korean film",
+    "anime": {
+        "label": "Anime, games & lo-fi",
         "input": UserInput(
             favorites=[
-                _fav("BTS", "artist"),
-                _fav("Parasite", "movie"),
-                _fav("Squid Game", "tv_show"),
-                _fav("Gentle Monster", "brand"),
+                _fav("Spirited Away", "movie"),
+                _fav("Cowboy Bebop", "tv_show"),
+                _fav("Nujabes", "artist"),
+                _fav("The Legend of Zelda: Breath of the Wild", "video_game"),
             ],
             start_time=time(12, 0),
         ),

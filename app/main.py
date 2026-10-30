@@ -84,7 +84,7 @@ def create_app(fake: bool | None = None) -> FastAPI:
             "fake_data": fake,
             "has_qloo": fake or settings.has_qloo,
             "has_llm": llm is not None,
-            "cities": ["Montreal"],
+            "cities": ["Vancouver"],
             "types": [{"value": t.value, "label": t.name.replace("_", " ")} for t in FavoriteType],
             "examples": [
                 {"id": k, "label": v["label"], "input": v["input"].model_dump(mode="json")}

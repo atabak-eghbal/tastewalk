@@ -18,7 +18,10 @@ from .cache import DiskCache, request_key
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 USER_AGENT = "TasteWalk/1.0 (Qloo hackathon demo; https://github.com/atabak-eghbal/tastewalk)"
 # lon_min, lat_max, lon_max, lat_min
-CITY_VIEWBOX = {"montreal": "-73.98,45.71,-73.47,45.40"}
+CITY_VIEWBOX = {
+    "vancouver": "-123.27,49.33,-123.02,49.19",
+    "montreal": "-73.98,45.71,-73.47,45.40",
+}
 MIN_INTERVAL_S = 1.1
 LOCK_WAIT_S = 3  # a visitor's request never queues long behind other lookups
 BREAKER_S = 300  # after a failure, skip OpenStreetMap for 5 minutes ("not checked")

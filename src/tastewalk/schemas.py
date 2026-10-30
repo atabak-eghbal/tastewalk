@@ -30,7 +30,7 @@ class Favorite(BaseModel):
 
 
 class UserInput(BaseModel):
-    city: Literal["Montreal"] = "Montreal"  # the only city with a configured centre and radius
+    city: Literal["Vancouver", "Montreal"] = "Vancouver"  # cities with a configured centre
     favorites: list[Favorite] = Field(min_length=1, max_length=8)
     start_time: time = time(10, 0)
     max_stops: int = Field(default=6, ge=2, le=10)
