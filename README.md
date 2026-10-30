@@ -32,7 +32,9 @@ Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph 
 <a id="demo-video"></a>**Demo video (1:41):** linked on the Devpost page (YouTube link added at submission).
 
 ## What it does
-You enter a few favorites (artists, films, shows, books, brands). Then:
+**Say, type or tap what you love:** speak a sentence ("I love Radiohead, Ghibli films and
+Patagonia"), type it, or tap from 40+ favorites across music, film, TV, books, games, brands and
+podcasts. The LLM only extracts the favorites you name; Qloo resolves each one. Then:
 1. **Taste agent** resolves each favorite to a Qloo entity and asks Qloo for places in Vancouver
    that people with that taste love, for each part of the day.
 2. **Planner agent** picks a varied day (one coffee, one meal, drinks last, no chains) by Qloo ID,
@@ -175,6 +177,8 @@ A GitHub Actions job pings `/healthz` every 10 minutes (set the repo variable `D
 - **Walking distance** is an estimate: straight-line distance x 1.3, not street routing.
 - **Opening hours** are checked only when Qloo returns them (18 of the 24 example stops).
 - **Time at each stop** uses simple per-category estimates.
+- **Voice input** uses the browser's speech recognition (Chrome, Edge, Safari); elsewhere you
+  type. "Read my day" uses the browser's built-in voice.
 - **Qloo coverage**: some real places aren't in Qloo, so the fact-checker says "not in Qloo",
   never "doesn't exist". Name matching is strict on purpose and can miss a real match.
 - **Results** are 4 profiles with one recorded LLM-only plan each; a fresh LLM plan differs

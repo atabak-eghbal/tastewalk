@@ -16,6 +16,8 @@ around. We wanted to build that friend, and to prove it beats the AI-only answer
 TasteWalk turns the things you already love (artists, films, shows, books, brands) into a
 walkable day in Vancouver:
 
+- **Say, type or tap what you love**: speak a sentence, type it, or tap from 40+ favorites
+  across music, film, TV, books, games, brands and podcasts. The LLM only extracts what you name.
 - **Your taste in Qloo**: each favorite is matched to a Qloo entity, with the themes they share.
 - **Places that fit**: Qloo recommends places in the city that people with your taste love, for
   each part of the day (coffee, culture, shopping, food, drinks).
@@ -102,6 +104,7 @@ categories, hours), and insights restricted to specific entities to audit anothe
 - The scorecard turns "Qloo makes it better" into checks a judge can see in the app.
 - Every recommendation is traceable: Qloo ID, affinity and the favorites that drove it.
 - Each plan streams live: you watch three agents, the baseline and the fact-checker work.
+- "Read my day" reads the itinerary aloud, for planning on the go.
 
 ## What we learned
 - A taste graph's real superpower for agents is grounding: the LLM is much more useful choosing
