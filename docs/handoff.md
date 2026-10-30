@@ -14,6 +14,10 @@ Atabak does the submitting, account actions and making the repo public; Claude p
 - 4 examples: `indie`, `design`, `anime`, `streetwear` (`/?example=indie` etc.). All verified live:
   each finishes in ~2 s once the startup prewarm has run (~2 min after a deploy/restart).
 
+## Input features (added Oct 30 evening)
+- Say or type what you love: `POST /api/parse` (LLM extracts only named favorites; browser speech
+  recognition for the mic), a 39-chip taste palette, and "Read my day" (browser speech synthesis).
+
 ## Architecture in one breath
 Taste agent (Qloo search + insights per day slot, explainability) -> Planner (LLM picks by Qloo ID;
 code: compact area, one coffee/meal/drinks, no chains, day order, swaps closed stops) -> Critic
@@ -44,13 +48,10 @@ docs/architecture.md and README.md.
 - Groq free: 200k tokens/day per model; LLM falls back to gpt-oss-20b when gpt-oss-120b is spent.
 
 ## Remaining work, in order
-1. **Video v3** (Vancouver, static shots + hard cuts, NO zoom/pan/animated scroll; Atabak dislikes
-   camera motion). A background agent in the old session was making it; check
-   `~/Desktop/tastewalk_video/` for `tastewalk_demo_v3.mp4`. If it isn't there, rebuild from the
-   pipeline in `~/Projects/tastewalk-video-tools/` (`v3/` = latest scripts: shots.py, cards.py,
-   narrate.py; Kokoro TTS voice af_heart; Playwright via `uv run --no-project --with playwright`).
-   Verify: duration ≤ 1:45, picture = audio length, a contact sheet you LOOK at, and consecutive
-   frames inside a shot identical except real UI changes (no motion). Never show keys.
+1. **Video: final is v5** (`~/Desktop/tastewalk_video/tastewalk_demo_v5.mp4` + `.srt`, 1:51,
+   thumbnails `*_v4.png`). Verified: no camera motion, live numbers, no Montreal/K-pop/Granville
+   claims. Pipeline: `~/Projects/tastewalk-video-tools/v5/`. Atabak uploads it to YouTube; then add
+   the YouTube thumbnail link to the README "Demo video" line.
 2. **Atabak:** make the GitHub repo public; About: website = demo URL, topics, MIT license visible.
    Then check the public repo page renders (README images, links) in a logged-out browser.
 3. **Atabak:** keep-awake ping on cron-job.org every 5 min to `/healthz` (GitHub cron is throttled).
