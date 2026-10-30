@@ -39,7 +39,13 @@ def make_clients(settings: Settings, offline: bool = False) -> tuple[QlooClient,
         cache,
         offline=offline or not settings.has_qloo,
     )
-    llm = LLM(settings.llm_api_key, settings.llm_base_url, settings.llm_model, cache)
+    llm = LLM(
+        settings.llm_api_key,
+        settings.llm_base_url,
+        settings.llm_model,
+        cache,
+        fallback_model=settings.llm_fallback_model,
+    )
     return qloo, llm
 
 
@@ -75,7 +81,10 @@ def run(
             yield Event("error", f"Qloo returned no places in {user.city} for this taste")
             return
 
-        itin = plan(candidates, profile, user, llm)
+        # The examples use the code-only planner so their routes never drift with LLM quota or
+        # model changes (the docs and video quote them); custom favorites get the LLM planner.
+        example = frozen_baseline(user) is not None
+        itin = plan(candidates, profile, user, None if example else llm)
         yield Event("plan", f"Planned {len(itin.stops)} stops, {itin.total_km} km walking", itin)
 
         itin = critique(itin, profile, llm)

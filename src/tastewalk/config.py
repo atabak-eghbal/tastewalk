@@ -18,6 +18,7 @@ class Settings:
     llm_api_key: str
     llm_base_url: str
     llm_model: str
+    llm_fallback_model: str
     routing_base_url: str
     max_stops: int
     cache_dir: Path
@@ -42,6 +43,7 @@ def load_settings() -> Settings:
         llm_api_key=os.getenv("LLM_API_KEY", ""),
         llm_base_url=os.getenv("LLM_BASE_URL", "https://api.openai.com/v1"),
         llm_model=os.getenv("LLM_MODEL", ""),
+        llm_fallback_model=os.getenv("LLM_FALLBACK_MODEL", "openai/gpt-oss-20b"),
         routing_base_url=os.getenv("ROUTING_BASE_URL", ""),
         max_stops=int(os.getenv("MAX_STOPS", "6")),
         cache_dir=cache_dir,
