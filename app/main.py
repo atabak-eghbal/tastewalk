@@ -31,6 +31,7 @@ from tastewalk.schemas import FavoriteType, UserInput
 STATIC = Path(__file__).parent / "static"
 log = logging.getLogger("tastewalk.app")
 RATE_LIMIT = 8  # plans per IP per minute (protects Qloo/LLM quotas on the public demo)
+PREWARM_GAP_S = 30  # one plan is ~6k LLM tokens; Groq free allows 8k/min
 
 
 def _jsonable(x: Any) -> Any:
@@ -59,6 +60,7 @@ def create_app(fake: bool | None = None) -> FastAPI:
             for last in run(ex["input"], qloo, llm):
                 pass
             log.warning("prewarm %s: %s", ex_id, last.step if last else "no events")
+            time.sleep(PREWARM_GAP_S)
 
     if not fake and settings.has_qloo and os.getenv("TASTEWALK_PREWARM", "1") == "1":
         threading.Thread(target=prewarm, daemon=True, name="prewarm").start()

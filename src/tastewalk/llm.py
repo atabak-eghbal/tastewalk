@@ -13,6 +13,7 @@ from .cache import DiskCache, request_key
 
 log = logging.getLogger(__name__)
 TIMEOUT_S = 40  # a stalled call must not freeze the demo; callers fall back without the LLM
+MAX_RETRIES = 3  # the SDK retries 429s after the provider's retry-after (Groq free: 8k tokens/min)
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -25,7 +26,7 @@ class LLM:
         self.model = model
         self.cache = cache
         self._client = (
-            OpenAI(api_key=api_key, base_url=base_url, timeout=TIMEOUT_S, max_retries=1)
+            OpenAI(api_key=api_key, base_url=base_url, timeout=TIMEOUT_S, max_retries=MAX_RETRIES)
             if api_key
             else None
         )
