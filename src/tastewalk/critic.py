@@ -45,9 +45,9 @@ def template_why(stop: Stop, profile: TasteProfile) -> str:
     names = stop.because_of or [e.name for e in profile.entities[:2]]
     parts = []
     if names:
-        s = f"Qloo matches this to people who love {_join(names)}"
+        s = f"Picked for you because you love {_join(names)}"
         if stop.place.affinity is not None:
-            s += f" (affinity {stop.place.affinity:.2f})"
+            s += f": Qloo affinity {stop.place.affinity:.2f}"
         parts.append(s + ".")
     if stop.place.vibe:
         parts.append(f"Expect: {', '.join(v.lower() for v in stop.place.vibe[:3])}.")

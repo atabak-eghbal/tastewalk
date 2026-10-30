@@ -32,7 +32,7 @@ from tastewalk.schemas import FavoriteType, UserInput
 STATIC = Path(__file__).parent / "static"
 log = logging.getLogger("tastewalk.app")
 RATE_LIMIT = 20  # custom plans per IP per minute (examples are cached and don't count)
-PREWARM_GAP_S = 20  # examples use frozen baselines (~4k LLM tokens each); Groq free: 8k/min
+PREWARM_GAP_S = 60  # each example's planner + critic ~4-6k LLM tokens; Groq free: 8k/min
 
 
 def _jsonable(x: Any) -> Any:

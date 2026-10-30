@@ -20,6 +20,9 @@ SLOT_TAKE = 15
 # Categories that are not a place to visit on a walk (matched as substrings, lowercase).
 SKIP_CATEGORIES = (
     "hotel",
+    "lodge",
+    "motel",
+    "lodging",
     "event venue",
     "university",
     "school",
@@ -64,6 +67,12 @@ THEME_TAG_TYPES = (
     "cultural_relevance:",
     "emotional_tone:",
 )
+
+
+def _categories(p: Place) -> str:
+    """All of a place's Qloo category tags: a hotel may be filed under 'City hall' first."""
+    tags = " ".join(t.name for t in p.tags if "category" in (t.type or ""))
+    return f"{p.category or ''} {tags}".lower()
 
 
 class NoTasteSignal(RuntimeError):
@@ -111,9 +120,7 @@ def find_candidates(qloo: QlooClient, user: UserInput, profile: TasteProfile) ->
     if center:
         c = Place(qloo_id="_center", name="center", lat=center[0], lon=center[1])
         places = [p for p in places if haversine_km(c, p) <= MAX_KM_FROM_CENTER]
-    places = [
-        p for p in places if not any(k in (p.category or "").lower() for k in SKIP_CATEGORIES)
-    ]
+    places = [p for p in places if not any(k in _categories(p) for k in SKIP_CATEGORIES)]
     # De-duplicate by id; keep the first copy (slot queries come first, so slots stick).
     seen, unique = set(), []
     for p in places:

@@ -52,7 +52,7 @@ class LLM:
                     model=self.model,
                     messages=messages,
                     response_format={"type": "json_object"},
-                    temperature=0.4,
+                    temperature=0,  # stable picks: the live demo must match the docs
                 )
             except OpenAIError as e:  # rate limit, timeout, outage: callers fall back
                 raise LLMError(f"LLM call failed: {type(e).__name__}: {e}") from e
