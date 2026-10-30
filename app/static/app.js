@@ -5,6 +5,9 @@ const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const hhmm = (t) => (t || "").slice(0, 5);
 const num = (x, d = 2) => (x == null ? "–" : Number(x).toFixed(d));
+// Qloo lists some names library-style: "Word (The)" -> "The Word". Also normalise odd spaces.
+const pretty = (n) => String(n ?? "").replace(/^(.*) \((The|Le|La|Les)\)$/, "$2 $1");
+const clean = (t) => String(t ?? "").replace(/[\u00a0\u202f]/g, " ");
 
 const STEPS = [
   ["taste", "Taste agent: matching your favorites in Qloo"],
@@ -42,7 +45,10 @@ async function init() {
   });
   $("#add-fav").addEventListener("click", () => addFav());
   $("#favs").addEventListener("click", (ev) => {
-    if (ev.target.closest(".fav-del") && $("#favs").children.length > 1) ev.target.closest(".fav").remove();
+    if (ev.target.closest(".fav-del") && $("#favs").children.length > 1) {
+      ev.target.closest(".fav").remove();
+      $("#add-fav").hidden = false;
+    }
   });
   $("#form").addEventListener("submit", (ev) => { ev.preventDefault(); history.replaceState(null, "", "/"); submit(); });
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showCol(t.dataset.col)));
@@ -114,6 +120,8 @@ function submit() {
       status.done = true;
       finish();
       renderResults(result);
+      const proof = $("#scorecard:not([hidden])") || $("#results");
+      setTimeout(() => proof.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
     } else {
       status[ev.step] = ev.message;
       if (ev.step === "taste") result.profile = ev.data;
@@ -186,30 +194,39 @@ function renderScorecard(itin, baseline, audit) {
   if (!baseline || !audit) { el.hidden = true; return; }
   const n = itin.stops.length;
   const withHours = itin.stops.filter((s) => s.place.hours).length;
-  const llmWalk = audit.found >= 2
-    ? `${audit.walk_km} km between the ${audit.found} it could locate${audit.longest_leg_min > 25 ? `, one leg ${audit.longest_leg_min} min` : ""}`
-    : "Unknown: Qloo can't locate enough of its stops";
-  const llmHours = audit.found
-    ? (audit.closed ? `<b class="bad">${audit.closed} closed</b> at the planned time` : `No conflicts found for the ${audit.found} located`)
-    : "Can't be checked";
+  const t = audit.total;
+  const llmPlaces = [
+    `<b>${audit.found}</b> located in Qloo`,
+    audit.in_osm ? `<b>${audit.in_osm}</b> exist on OpenStreetMap but not in Qloo` : "",
+    audit.nowhere ? `<b class="bad">${audit.nowhere}</b> found in neither` : "",
+  ].filter(Boolean).join(" · ");
+  const unknownHours = audit.found - audit.hours_checked;
+  const llmHours = !audit.found ? "Can't be checked: no stop is in Qloo"
+    : !audit.hours_checked ? `Unknown: Qloo has no hours for the ${audit.found} located`
+    : `${audit.hours_checked} checked${audit.closed ? `, <b class="bad">${audit.closed} closed</b> at the planned time` : ", none closed"}${unknownHours > 0 ? ` · ${unknownHours} unknown` : ""}`;
+  const llmWalk = audit.found >= 2 && audit.walk_km > 0
+    ? `Only between the located stops: ${audit.walk_km} km${audit.longest_leg_min > 25 ? `, one leg ${audit.longest_leg_min} min` : ""}`
+    : "Can't be estimated: too few stops can be located";
   const rows = [
-    ["Places Qloo can verify", `<b class="good">${n} of ${n}</b>, each with a Qloo ID`, `<b class="${audit.found < audit.total ? "bad" : ""}">${audit.found} of ${audit.total}</b>`],
-    ["Walking", `<b>${itin.total_km} km</b>, measured from Qloo coordinates`, llmWalk],
-    ["Opening hours", `Checked for ${withHours} of ${n} (where Qloo has hours)`, llmHours],
-    ["Taste match (Qloo affinity)", `<b>${num(audit.qloo_avg_affinity)}</b> average`, audit.avg_affinity != null ? `${num(audit.avg_affinity)} for the located places` : "–"],
-    ["Why each stop", "Qloo shows which of your favorites drove each pick", "The LLM's own opinion"],
+    ["The places", `<b class="good">${n} Qloo places</b>, each with a Qloo ID, address and coordinates`, llmPlaces],
+    ["Opening hours", `Checked for ${withHours} of ${n} at the planned time`, llmHours],
+    ["Walking", `<b>${itin.total_km} km</b> (estimated: straight line x 1.3)`, llmWalk],
+    ["Why each stop", "Qloo says which of your favorites drove each pick", "The LLM's own words"],
   ];
+  const head = audit.nowhere
+    ? `The AI-only plan named <span class="bad">${audit.nowhere} of ${t}</span> places we couldn't find in Qloo or OpenStreetMap. Every TasteWalk stop is a real Qloo place.`
+    : `Qloo could check <span class="bad">${audit.found} of ${t}</span> AI-only stops, and <span class="good">${n} of ${n}</span> TasteWalk stops.`;
   el.hidden = false;
   el.innerHTML = `
     <div class="sc-head">
       <span class="kicker">The proof</span>
-      <h2>Qloo could verify <span class="good">${n}/${n}</span> of our stops and <span class="bad">${audit.found}/${audit.total}</span> of the LLM's.</h2>
+      <h2>${head}</h2>
     </div>
     <table class="sc">
       <thead><tr><th></th><th class="q">With Qloo</th><th class="l">LLM only</th></tr></thead>
-      <tbody>${rows.map(([k, q, l]) => `<tr><th scope="row">${k}</th><td>${q}</td><td>${l}</td></tr>`).join("")}</tbody>
+      <tbody>${rows.map(([k, q, l]) => `<tr><th scope="row">${k}</th><td class="q">${q}</td><td class="l">${l}</td></tr>`).join("")}</tbody>
     </table>
-    <p class="fine">"Not in Qloo" doesn't prove a place is made up: Qloo's coverage isn't complete. It means nobody can confirm the place, its hours or the walk before you go.</p>`;
+    <p class="fine">We look up each AI-named place in Qloo, then in OpenStreetMap. "Found in neither" doesn't prove a place is made up (both have gaps); it means nobody can confirm it, its hours or the walk before you go. Branches of chains are marked unclear and not judged.</p>`;
 }
 
 function renderTimeline(stops) {
@@ -217,6 +234,7 @@ function renderTimeline(stops) {
     const p = s.place;
     const leg = i ? `<li class="leg">🚶 ${s.walk_minutes_from_prev} min walk</li>` : "";
     const because = s.because_of.map((t) => `<span class="chip">♥ ${esc(t)}</span>`).join(" ");
+    const name = pretty(p.name);
     const vibe = (p.vibe || []).slice(0, 4).map((t) => `<span class="chip grey">${esc(t)}</span>`).join(" ");
     const where = [p.neighborhood, p.address].filter(Boolean).map(esc).join(" · ");
     const aff = p.affinity != null
@@ -227,15 +245,15 @@ function renderTimeline(stops) {
         <div class="stop-meta"><span class="time">${hhmm(s.arrive)}–${hhmm(s.leave)}</span> · ${esc(p.category || "Place")} ${aff}</div>
         <div class="stop-head">
           <div>
-            <h3>${esc(p.name)}</h3>
+            <h3>${esc(name)}</h3>
             ${where ? `<div class="stop-meta">${where}</div>` : ""}
             ${p.description ? `<p class="desc">${esc(p.description)}</p>` : ""}
           </div>
-          ${p.image_url ? `<img class="thumb" src="${esc(p.image_url)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
+          ${p.image_url ? `<img class="thumb" src="${esc(p.image_url)}" alt="${esc(name)}" loading="lazy" onerror="this.remove()">` : ""}
         </div>
-        ${s.why_it_fits ? `<div class="why"><b>Why it fits you</b>${esc(s.why_it_fits)}</div>` : ""}
+        ${s.why_it_fits ? `<div class="why"><b>Why it fits you</b>${esc(clean(s.why_it_fits))}</div>` : ""}
         ${because || vibe ? `<div class="chips">${because} ${vibe}</div>` : ""}
-        <div class="qid">✓ Qloo ID ${esc(p.qloo_id)}</div>
+        <div class="qid" title="Qloo entity ID ${esc(p.qloo_id)}">✓ Qloo place · ${esc(p.qloo_id.slice(0, 8))}…</div>
       </div></li>`;
   }).join("");
 }
@@ -258,7 +276,7 @@ function renderMap(stops, candidates, audit) {
   const pts = stops.map((s) => [s.place.lat, s.place.lon]);
   L.polyline(pts, { color: accent, weight: 4, opacity: .85, dashArray: "6 8" }).addTo(mapLayer);
 
-  const llmPts = (audit?.stops || []).filter((c) => c.found);
+  const llmPts = (audit?.stops || []).filter((c) => c.found && c.lat != null && c.lon != null);
   llmPts.forEach((c) => {
     const icon = L.divIcon({ className: "", html: `<div class="pin llm">AI</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
     L.marker([c.lat, c.lon], { icon }).bindTooltip(`LLM only: ${esc(c.qloo_name)}`).addTo(mapLayer);
@@ -266,7 +284,7 @@ function renderMap(stops, candidates, audit) {
 
   pins = stops.map((s, i) => {
     const icon = L.divIcon({ className: "", html: `<div class="pin" data-i="${i}">${i + 1}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
-    return L.marker([s.place.lat, s.place.lon], { icon }).bindTooltip(esc(s.place.name))
+    return L.marker([s.place.lat, s.place.lon], { icon }).bindTooltip(esc(pretty(s.place.name)))
       .on("click", () => document.querySelector(`.stop[data-i="${i}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" }))
       .on("mouseover", () => highlight(String(i))).on("mouseout", () => highlight(null))
       .addTo(mapLayer);
@@ -282,7 +300,7 @@ function highlight(i) {
 
 function renderBaseline(b, audit) {
   if (!b) {
-    $("#baseline").innerHTML = `<li class="empty">${META.has_llm ? "The LLM-only plan is unavailable right now (provider limit). The Qloo plan above is complete." : "No LLM configured, so there is no baseline to compare."}</li>`;
+    $("#baseline").innerHTML = `<li class="empty">${META.has_llm ? "The LLM-only plan is unavailable right now (provider limit). The Qloo plan is complete; the examples above always include it." : "No LLM configured, so there is no baseline to compare."}</li>`;
     return;
   }
   const checks = audit?.stops || [];
@@ -290,12 +308,13 @@ function renderBaseline(b, audit) {
     const c = checks[i];
     let badges = "";
     if (c) {
-      badges = c.found
-        ? `<span class="badge ok" title="${esc(c.qloo_name)}${c.address ? " · " + esc(c.address) : ""}">✓ Located in Qloo</span>`
-        : `<span class="badge no">? Not in Qloo</span>`;
+      if (c.found && c.ambiguous) badges = `<span class="badge" title="Several branches in Qloo">◐ Chain: branch unclear</span>`;
+      else if (c.found) badges = `<span class="badge ok" title="${esc(c.qloo_name)}${c.address ? " · " + esc(c.address) : ""}">✓ Located in Qloo</span>`;
+      else if (c.in_osm) badges = `<span class="badge">🗺 On OpenStreetMap, not in Qloo</span>`;
+      else if (c.in_osm === false) badges = `<span class="badge no">✗ Not found in Qloo or OpenStreetMap</span>`;
+      else badges = `<span class="badge">? Not in Qloo</span>`;
       if (c.open === false) badges += `<span class="badge no">✗ Closed at this time</span>`;
       if (c.walk_minutes_from_prev != null) badges += `<span class="badge ${c.walk_minutes_from_prev > 25 ? "no" : ""}">🚶 ${c.walk_minutes_from_prev} min from previous</span>`;
-      if (c.affinity != null) badges += `<span class="badge">affinity ${num(c.affinity)}</span>`;
     }
     return `<li>
       <div class="stop-meta">${esc(s.time || "")}${s.category ? " · " + esc(s.category) : ""}</div>

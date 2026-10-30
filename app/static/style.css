@@ -230,6 +230,16 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accen
   .ex-favs { display: none; }
   .thumb { width: 64px; height: 64px; }
 }
+@media (max-width: 560px) {
+  .sc thead { display: none; }
+  .sc tr { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); padding: 8px 0; }
+  .sc tbody th { grid-column: 1 / -1; border: 0; padding: 0 4px 4px; }
+  .sc td { border: 0; padding: 6px 8px; font-size: .85rem; border-radius: 8px; }
+  .sc td.q::before { content: "With Qloo"; }
+  .sc td.l::before { content: "LLM only"; }
+  .sc td::before { display: block; font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 2px; }
+  .sc tbody tr:last-child { border-bottom: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
