@@ -15,7 +15,7 @@ services:
       - key: LLM_API_KEY
         sync: false
       - key: LLM_BASE_URL
-        sync: false
+        value: https://generativelanguage.googleapis.com/v1beta/openai/
       - key: LLM_MODEL
         sync: false
       - key: MAX_STOPS
