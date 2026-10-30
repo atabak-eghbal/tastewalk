@@ -18,21 +18,27 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 from sse_starlette.sse import EventSourceResponse
 from starlette.concurrency import iterate_in_threadpool
 
 from tastewalk.config import load_settings
 from tastewalk.dev_fake import fake_client
 from tastewalk.examples import EXAMPLES
+from tastewalk.llm import LLMError
 from tastewalk.loop import make_clients, run
 from tastewalk.osm import OSMClient
+from tastewalk.parse import parse_favorites
 from tastewalk.schemas import FavoriteType, UserInput
 
 STATIC = Path(__file__).parent / "static"
 log = logging.getLogger("tastewalk.app")
 RATE_LIMIT = 20  # custom plans per IP per minute (examples are cached and don't count)
 PREWARM_GAP_S = 60  # each example's planner + critic ~4-6k LLM tokens; Groq free: 8k/min
+
+
+class ParseIn(BaseModel):
+    text: str = Field(min_length=2, max_length=500)
 
 
 def _jsonable(x: Any) -> Any:
@@ -103,6 +109,19 @@ def create_app(fake: bool | None = None) -> FastAPI:
             return False
         q.append(now)
         return True
+
+    @app.post("/api/parse")
+    def parse(body: ParseIn, request: Request) -> dict:
+        """'I love Radiohead and Ghibli films' -> favorites for the form (typed or spoken)."""
+        if llm is None:
+            raise HTTPException(503, "Free-text input needs an LLM; add favorites below instead.")
+        if not _rate_ok(request.client.host if request.client else "?"):
+            raise HTTPException(429, "The demo is busy. Try again in a minute.")
+        try:
+            favs = parse_favorites(llm, body.text)
+        except LLMError as e:
+            raise HTTPException(503, "Couldn't read that right now; add favorites below.") from e
+        return {"favorites": [f.model_dump(mode="json") for f in favs]}
 
     @app.get("/api/plan")
     async def plan(q: str, request: Request) -> EventSourceResponse:

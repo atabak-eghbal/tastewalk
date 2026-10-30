@@ -18,15 +18,30 @@
   <div class="wrap">
     <a class="brand" href="/">Taste<span>Walk</span></a>
     <h1>Your taste, turned into a day you can&nbsp;walk.</h1>
-    <p class="lede">Name a few things you love. Qloo's taste graph finds the places in the city that people with your taste love, our agents plan a real walking route, and then Qloo fact-checks what an AI alone would have told you.</p>
+    <p class="lede">Say what you love. Qloo's taste graph finds the places in Vancouver that people with your taste love, our agents plan a real walking day and explain every stop, and a fact-checker shows what an AI alone would have told you.</p>
+    <span class="kicker hero-k">Try an example day</span>
     <div class="examples" id="examples" aria-label="Example days"></div>
   </div>
 </header>
 
 <main class="wrap">
   <section class="card form-card" aria-labelledby="form-h">
-    <h2 id="form-h">Or build your own</h2>
+    <h2 id="form-h">Or build your own day</h2>
+    <div class="say">
+      <label for="say-text" class="kicker">Say or type what you love</label>
+      <div class="say-row">
+        <input id="say-text" maxlength="500" placeholder="e.g. I love Radiohead, Ghibli films like Spirited Away, and Patagonia">
+        <button type="button" id="mic" class="icon-btn mic" aria-label="Speak instead of typing" title="Speak" hidden>🎤</button>
+        <button type="button" id="say-go" class="secondary">Fill in</button>
+      </div>
+      <p id="say-status" class="say-status" aria-live="polite"></p>
+    </div>
+    <div class="palette-wrap">
+      <span class="kicker muted-k">Or tap a few favorites</span>
+      <div id="palette" class="palette"></div>
+    </div>
     <form id="form" autocomplete="off">
+      <span class="kicker muted-k">Your favorites</span>
       <div id="favs" class="favs"></div>
       <button type="button" class="link-btn" id="add-fav">+ Add a favorite</button>
       <div class="row opts">
@@ -61,7 +76,10 @@
     <div class="compare">
       <article class="col col-qloo active" data-col="qloo">
         <header class="col-h">
-          <span class="kicker">With Qloo taste graph</span>
+          <div class="col-top">
+            <span class="kicker">With Qloo taste graph</span>
+            <button type="button" id="read" class="secondary small" hidden>🔊 Read my day</button>
+          </div>
           <p id="qloo-summary"></p>
         </header>
         <div id="map" class="map" role="img" aria-label="Map of the walking route"></div>

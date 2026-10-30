@@ -243,3 +243,54 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accen
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* Say or type what you love */
+.hero-k { color: #ffb38a; margin-top: 4px; }
+.say { margin: 4px 0 14px; }
+.say-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+.say-row input { font-size: 1rem; padding: 12px 14px; }
+.secondary {
+  border: 1px solid var(--accent); background: transparent; color: var(--accent);
+  border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.secondary:hover { background: var(--accent-soft); }
+.secondary:disabled { opacity: .5; cursor: progress; }
+.secondary.small { padding: 5px 10px; font-size: .82rem; }
+.mic { width: 46px; font-size: 1.15rem; }
+.mic.listening { border-color: var(--bad); background: var(--bad-soft); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgb(185 28 28 / .15); } }
+.say-status { min-height: 1.3em; margin: 6px 2px 0; font-size: .88rem; color: var(--muted); }
+.say-status.bad { color: var(--bad); }
+
+/* Taste palette */
+.palette-wrap { margin: 0 0 16px; padding: 14px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.palette { display: grid; gap: 8px; margin-top: 6px; }
+.pal-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pal-h { width: 5.5rem; flex: none; font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.pal-chip {
+  font: inherit; font-size: .82rem; padding: 4px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); transition: background .12s, border-color .12s;
+}
+.pal-chip:hover { border-color: var(--accent); }
+.pal-chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pal-chip.on::before { content: "✓ "; }
+#form > .kicker { margin-bottom: 6px; }
+
+/* Polish */
+.col-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hero { padding: 26px 0 40px; }
+.hero h1 { margin-top: 24px; }
+.ex-card { padding: 16px; }
+.primary { font-size: 1.02rem; padding: 14px 20px; box-shadow: 0 6px 18px rgb(217 72 15 / .25); }
+.stop:hover { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
+.stop .num { box-shadow: 0 0 0 4px var(--accent-soft); }
+.card h2 { letter-spacing: -.01em; }
+
+@media (max-width: 560px) {
+  .say-row { grid-template-columns: 1fr auto; }
+  .say-row #say-go { grid-column: 1 / -1; }
+  .pal-h { width: 100%; }
+  .pal-group { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .pal-group .pal-h { position: sticky; left: 0; width: auto; padding-right: 6px; background: var(--bg); }
+  .pal-chip { white-space: nowrap; }
+}

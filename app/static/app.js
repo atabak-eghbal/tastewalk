@@ -18,12 +18,24 @@ const STEPS = [
   ["audit", "Fact-checker: looking up the LLM's places in Qloo"],
 ];
 const EXAMPLE_ICONS = { indie: "🎸", design: "🪴", anime: "🎮", streetwear: "👟" };
+// One-click favorites across many tastes; every name was checked to resolve in Qloo.
+const PALETTE = [
+  ["Music", "artist", ["Taylor Swift", "Kendrick Lamar", "Radiohead", "Miles Davis", "Daft Punk", "BTS", "Billie Eilish", "Bad Bunny", "Fleetwood Mac", "Bon Iver"]],
+  ["Film", "movie", ["Spirited Away", "The Godfather", "Dune", "Barbie", "Hereditary", "Pulp Fiction", "Everything Everywhere All at Once"]],
+  ["TV", "tv_show", ["Stranger Things", "The Office", "Squid Game", "The Bear", "Succession", "Anthony Bourdain: Parts Unknown"]],
+  ["Books", "book", ["Harry Potter and the Sorcerer's Stone", "The Hobbit", "Normal People", "Pride and Prejudice"]],
+  ["Games", "video_game", ["Minecraft", "Elden Ring", "Animal Crossing: New Horizons", "Stardew Valley"]],
+  ["Brands", "brand", ["Patagonia", "Nike", "Aesop", "Lululemon", "Supreme", "Muji"]],
+  ["Podcasts", "podcast", ["Serial", "The Joe Rogan Experience"]],
+];
+const typeUrn = (k) => (k === "video_game" ? "urn:entity:videogame" : `urn:entity:${k}`);
 
 let META = null;
 let map = null;
 let mapLayer = null;
 let source = null;
 let pins = [];
+let lastItin = null;
 
 async function init() {
   META = await fetch("/api/meta").then((r) => r.json());
@@ -44,10 +56,15 @@ async function init() {
     loadExample(META.examples.find((e) => e.id === b.dataset.ex).input, true);
   });
   $("#add-fav").addEventListener("click", () => addFav());
+  renderPalette();
+  initSay();
+  initRead();
+  $("#favs").addEventListener("input", syncPalette);
   $("#favs").addEventListener("click", (ev) => {
     if (ev.target.closest(".fav-del") && $("#favs").children.length > 1) {
       ev.target.closest(".fav").remove();
       $("#add-fav").hidden = false;
+      syncPalette();
     }
   });
   $("#form").addEventListener("submit", (ev) => { ev.preventDefault(); history.replaceState(null, "", "/"); submit(); });
@@ -58,7 +75,8 @@ async function init() {
   // Shareable demo links: /?example=indie runs that profile right away.
   const exId = new URLSearchParams(location.search).get("example");
   const ex = META.examples.find((e) => e.id === exId);
-  loadExample((ex || META.examples[0]).input, !!ex);
+  if (ex) loadExample(ex.input, true);
+  else addFav(); // the custom form starts empty: tap, type or say your own favorites
 }
 
 function showBanner(text) { const b = $("#banner"); b.textContent = text; b.hidden = false; }
@@ -81,7 +99,115 @@ function loadExample(input, run) {
   $("#stops").value = input.max_stops;
   document.querySelectorAll(".ex-card").forEach((c) =>
     c.classList.toggle("active", META.examples.find((e) => e.id === c.dataset.ex)?.input === input && run));
+  syncPalette();
   if (run) submit();
+}
+
+// --- Taste palette -------------------------------------------------------------------
+function renderPalette() {
+  $("#palette").innerHTML = PALETTE.map(([group, kind, names]) => `
+    <div class="pal-group"><span class="pal-h">${esc(group)}</span>${names.map((n) =>
+      `<button type="button" class="pal-chip" data-name="${esc(n)}" data-type="${typeUrn(kind)}" aria-pressed="false">${esc(n)}</button>`).join("")}</div>`).join("");
+  $("#palette").addEventListener("click", (ev) => {
+    const b = ev.target.closest(".pal-chip");
+    if (!b) return;
+    const row = favRows().find((r) => $(".fav-name", r).value.trim().toLowerCase() === b.dataset.name.toLowerCase());
+    if (row) {
+      if (favRows().length > 1) row.remove(); else $(".fav-name", row).value = "";
+      $("#add-fav").hidden = false;
+    } else {
+      putFav(b.dataset.name, b.dataset.type);
+    }
+    syncPalette();
+  });
+}
+
+const favRows = () => [...document.querySelectorAll(".fav")];
+
+function putFav(name, type) {
+  const empty = favRows().find((r) => !$(".fav-name", r).value.trim());
+  if (empty) { $(".fav-name", empty).value = name; $(".fav-type", empty).value = type; return true; }
+  if (favRows().length >= 8) { sayStatus("You can add up to 8 favorites."); return false; }
+  addFav(name, type);
+  return true;
+}
+
+function syncPalette() {
+  const have = new Set(favRows().map((r) => $(".fav-name", r).value.trim().toLowerCase()));
+  document.querySelectorAll(".pal-chip").forEach((c) => {
+    const on = have.has(c.dataset.name.toLowerCase());
+    c.classList.toggle("on", on);
+    c.setAttribute("aria-pressed", on);
+  });
+}
+
+// --- Say or type what you love ---------------------------------------------------------
+function sayStatus(text, bad = false) {
+  const el = $("#say-status");
+  el.textContent = text;
+  el.classList.toggle("bad", bad);
+}
+
+function initSay() {
+  $("#say-go").addEventListener("click", parseSay);
+  $("#say-text").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); parseSay(); } });
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return; // typing still works everywhere
+  const mic = $("#mic");
+  mic.hidden = false;
+  let rec = null;
+  mic.addEventListener("click", () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR();
+    rec.lang = "en-US";
+    rec.interimResults = true;
+    rec.onresult = (e) => { $("#say-text").value = [...e.results].map((r) => r[0].transcript).join(" "); };
+    rec.onerror = (e) => sayStatus(e.error === "not-allowed" ? "Microphone blocked: type instead." : "Didn't catch that. Try again or type.", true);
+    rec.onend = () => { mic.classList.remove("listening"); rec = null; if ($("#say-text").value.trim()) parseSay(); };
+    mic.classList.add("listening");
+    sayStatus("Listening… say a few things you love.");
+    rec.start();
+  });
+}
+
+async function parseSay() {
+  const text = $("#say-text").value.trim();
+  if (text.length < 2) { sayStatus("Type or say a few things you love first.", true); return; }
+  sayStatus("Reading your tastes…");
+  $("#say-go").disabled = true;
+  try {
+    const r = await fetch("/api/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.detail || "Couldn't read that.");
+    if (!body.favorites.length) { sayStatus("No favorites found in that. Try naming artists, films, shows, games or brands.", true); return; }
+    $("#favs").innerHTML = "";
+    $("#add-fav").hidden = false;
+    body.favorites.forEach((f) => addFav(f.name, f.type));
+    syncPalette();
+    sayStatus(`Added ${body.favorites.map((f) => f.name).join(", ")}. Check the types, then plan your walk.`);
+  } catch (e) {
+    sayStatus(typeof e.message === "string" ? e.message : "Couldn't read that.", true);
+  } finally {
+    $("#say-go").disabled = false;
+  }
+}
+
+// --- Read my day aloud -----------------------------------------------------------------
+function initRead() {
+  if (!("speechSynthesis" in window)) return;
+  $("#read").addEventListener("click", () => {
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); $("#read").textContent = "🔊 Read my day"; return; }
+    if (!lastItin) return;
+    const lines = lastItin.stops.map((s, i) => {
+      const walk = i ? `Then a ${s.walk_minutes_from_prev} minute walk. ` : "";
+      return `${walk}At ${hhmm(s.arrive)}, ${pretty(s.place.name)}. ${clean(s.why_it_fits)}`;
+    });
+    const u = new SpeechSynthesisUtterance(`Your day in ${lastItin.city}. ${lines.join(" ")}`);
+    u.rate = 1.02;
+    u.onend = u.onerror = () => { $("#read").textContent = "🔊 Read my day"; };
+    $("#read").textContent = "■ Stop reading";
+    speechSynthesis.speak(u);
+  });
 }
 
 function readInput() {
@@ -98,7 +224,7 @@ function readInput() {
 
 function submit() {
   const input = readInput();
-  if (!input.favorites.length) return;
+  if (!input.favorites.length) { sayStatus("Add at least one favorite first: tap, type or say it.", true); return; }
   if (source) source.close();
   $("#go").disabled = true;
   $("#results").hidden = true;
@@ -164,6 +290,8 @@ function renderSteps(status, running) {
 
 function renderResults({ profile, candidates, itin, baseline, audit }) {
   if (!itin) return;
+  lastItin = itin;
+  $("#read").hidden = !("speechSynthesis" in window);
   $("#results").hidden = false;
   renderProfile(profile);
   $("#qloo-summary").innerHTML =

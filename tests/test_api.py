@@ -33,3 +33,33 @@ def test_plan_streams_events():
     assert steps[0] == "taste" and steps[-1] == "done"
     stops = events[-1]["data"]["qloo_itinerary"]["stops"]
     assert stops and all(s["place"]["qloo_id"] for s in stops)
+
+
+def test_parse_without_llm_is_a_clear_503(monkeypatch):
+    monkeypatch.setenv("LLM_API_KEY", "")  # .env doesn't override a set variable
+    r = _client().post("/api/parse", json={"text": "I love Radiohead"})
+    assert r.status_code == 503
+
+
+def test_parse_maps_llm_output_to_favorites():
+    from tastewalk.parse import _Parsed, parse_favorites
+    from tastewalk.schemas import FavoriteType
+
+    class FakeLLM:
+        def json(self, system, user, schema):
+            assert schema is _Parsed
+            return _Parsed.model_validate(
+                {
+                    "favorites": [
+                        {"name": "Radiohead", "type": "artist"},
+                        {"name": "radiohead ", "type": "artist"},
+                        {"name": "Spirited Away", "type": "movie"},
+                    ]
+                }
+            )
+
+    favs = parse_favorites(FakeLLM(), "I love Radiohead and Spirited Away")
+    assert [(f.name, f.type) for f in favs] == [
+        ("Radiohead", FavoriteType.artist),
+        ("Spirited Away", FavoriteType.movie),
+    ]
