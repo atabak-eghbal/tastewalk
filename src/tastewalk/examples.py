@@ -71,7 +71,9 @@ EXAMPLES: dict[str, dict] = {
 
 # LLM-only plans for the examples, recorded once (LLM output, not Qloo data) so the live demo,
 # README and video agree. Custom favorites always get a live LLM-only plan.
-_FROZEN = json.loads((Path(__file__).with_name("example_baselines.json")).read_text())["plans"]
+_DATA = json.loads((Path(__file__).with_name("example_baselines.json")).read_text())
+_FROZEN = _DATA["plans"]
+FROZEN_OSM: dict[str, bool] = _DATA.get("osm", {})  # OpenStreetMap verdicts for those names
 
 
 def frozen_baseline(user: UserInput) -> BaselineItinerary | None:

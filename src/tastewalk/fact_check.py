@@ -171,7 +171,9 @@ def fact_check(
     itin: Itinerary,
     day: date | None = None,
     osm: OSMClient | None = None,
+    osm_known: dict[str, bool] | None = None,
 ) -> BaselineAudit:
+    """osm_known: recorded OpenStreetMap verdicts by place name (the examples), used first."""
     weekday = (day or date.today()).weekday()
     with ThreadPoolExecutor(max_workers=6) as pool:
         lookups = list(
@@ -191,7 +193,9 @@ def fact_check(
     checks, prev = [], None
     for stop, (place, ambiguous) in zip(baseline.stops, lookups, strict=True):
         if place is None:
-            known = in_osm(osm, stop.name, baseline.city) if osm else None
+            known = (osm_known or {}).get(stop.name)
+            if known is None and osm is not None:
+                known = in_osm(osm, stop.name, baseline.city)
             checks.append(StopCheck(name=stop.name, found=False, in_osm=known))
             continue
         if ambiguous:

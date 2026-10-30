@@ -1,5 +1,5 @@
 {
- "note": "LLM-only plans for the example profiles, recorded 2026-10-30 with openai/gpt-oss-120b on Groq. Frozen so the live demo, README and video show the same numbers. LLM output, not Qloo data.",
+ "note": "LLM-only plans for the example profiles, recorded 2026-10-30 with openai/gpt-oss-120b on Groq. Frozen so the live demo, README and video show the same numbers. LLM output, not Qloo data. 'osm': whether OpenStreetMap (Nominatim) has a place with that name, checked the same day (data © OpenStreetMap contributors, ODbL).",
  "plans": {
   "indie": {
    "city": "Montreal",
@@ -165,5 +165,31 @@
     }
    ]
   }
+ },
+ "osm": {
+  "Le Saint-Sulpice": true,
+  "Café Olimpico": true,
+  "Phonopolis Vinyl Record Store": true,
+  "Le Balcon du Musée des beaux-arts de Montréal": true,
+  "Parc du Mont-Royal – Belvédère Kondiaronk": true,
+  "Cinéma du Parc": true,
+  "Aesop Boutique – Rue Saint-Paul": true,
+  "Muji Montréal – Rue Saint‑Denis": false,
+  "Café Olimpico – Mile End": true,
+  "Marché Jean‑Talon": true,
+  "Le Bremner – Old Port": false,
+  "Atelier de cuisine – La Guilde Culinaire": false,
+  "K-Pop Café K-Box": false,
+  "Korean Cultural Centre of Montreal": false,
+  "Miyako Korean BBQ": false,
+  "Gentle Monster Pop‑up at Rue Saint‑Laurent": false,
+  "Cinema du Parc – Korean Film Night": true,
+  "Street Art Mural at Rue Saint‑Denis": false,
+  "Le Saint-Sulpice Hip-Hop Lounge": true,
+  "Le 5e Boutique": false,
+  "Nike Montreal Flagship": true,
+  "Street Art Walk on Rue Saint-Laurent": false,
+  "Cafe Le Petit Boulanger": false,
+  "Bar Le Saint-Claude (Atlanta Night)": false
  }
 }

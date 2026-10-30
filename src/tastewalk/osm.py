@@ -20,16 +20,19 @@ USER_AGENT = "TasteWalk/1.0 (Qloo hackathon demo; https://github.com/atabak-eghb
 # lon_min, lat_max, lon_max, lat_min
 CITY_VIEWBOX = {"montreal": "-73.98,45.71,-73.47,45.40"}
 MIN_INTERVAL_S = 1.1
+LOCK_WAIT_S = 3  # a visitor's request never queues long behind other lookups
+BREAKER_S = 300  # after a failure, skip OpenStreetMap for 5 minutes ("not checked")
 
 _lock = threading.Lock()
 _last_call = 0.0
+_broken_until = 0.0
 
 
 class OSMClient:
     def __init__(self, cache: DiskCache, transport: httpx.BaseTransport | None = None):
         self.cache = cache
         self._http = httpx.Client(
-            headers={"User-Agent": USER_AGENT}, timeout=10, transport=transport
+            headers={"User-Agent": USER_AGENT}, timeout=4, transport=transport
         )
 
     def search(self, query: str, city: str) -> list[dict[str, Any]] | None:
@@ -41,17 +44,21 @@ class OSMClient:
         cached = self.cache.get(key)
         if cached is not None:
             return cached
-        global _last_call
+        global _last_call, _broken_until
+        if time.monotonic() < _broken_until or not _lock.acquire(timeout=LOCK_WAIT_S):
+            return None
         try:
-            with _lock:
-                wait = MIN_INTERVAL_S - (time.monotonic() - _last_call)
-                if wait > 0:
-                    time.sleep(wait)
-                _last_call = time.monotonic()
-                r = self._http.get(NOMINATIM_URL, params=params)
+            wait = MIN_INTERVAL_S - (time.monotonic() - _last_call)
+            if wait > 0:
+                time.sleep(wait)
+            _last_call = time.monotonic()
+            r = self._http.get(NOMINATIM_URL, params=params)
             r.raise_for_status()
             data = r.json()
         except (httpx.HTTPError, ValueError):
+            _broken_until = time.monotonic() + BREAKER_S
             return None
+        finally:
+            _lock.release()
         self.cache.set(key, data)
         return data

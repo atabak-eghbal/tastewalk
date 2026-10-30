@@ -16,6 +16,7 @@ import logging
 import re
 import unicodedata
 from datetime import time
+from time import sleep
 from typing import Any
 
 import httpx
@@ -70,7 +71,11 @@ class QlooClient:
             return cached
         if self.offline:
             raise QlooError(f"No QLOO_API_KEY (or --offline) and not cached: {path} {params}")
-        r = self._http.get(path, params=params)
+        for wait in (1, 2, 4, 0):  # Qloo rate limit: back off and retry, then give up
+            r = self._http.get(path, params=params)
+            if r.status_code != 429 or not wait:
+                break
+            sleep(wait)
         if r.status_code >= 400:
             raise QlooError(f"Qloo {path} -> {r.status_code}: {r.text[:300]}")
         data = r.json()

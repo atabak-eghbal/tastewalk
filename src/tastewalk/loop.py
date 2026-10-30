@@ -14,7 +14,7 @@ from .baseline import baseline_itinerary
 from .cache import DiskCache
 from .config import Settings, load_settings
 from .critic import critique
-from .examples import frozen_baseline
+from .examples import FROZEN_OSM, frozen_baseline
 from .fact_check import fact_check
 from .llm import LLM, LLMError
 from .osm import OSMClient
@@ -94,7 +94,7 @@ def run(
         audit = None
         if baseline is not None:
             try:
-                audit = fact_check(qloo, baseline, profile, itin, osm=osm)
+                audit = fact_check(qloo, baseline, profile, itin, osm=osm, osm_known=FROZEN_OSM)
                 nowhere = f", {audit.nowhere} found nowhere" if audit.nowhere else ""
                 yield Event(
                     "audit",
