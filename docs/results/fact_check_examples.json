@@ -1,18 +1,19 @@
 {
  "date": "2026-10-30",
  "city": "Vancouver",
- "commit": "4a25b43",
- "llm_model": "openai/gpt-oss-120b (Groq)",
- "note": "LLM-only plans are frozen in src/tastewalk/example_baselines.json. Place names are LLM output; no Qloo response data is stored here (Qloo terms). Walking is estimated (straight line x 1.3).",
+ "source": "https://tastewalk-fy6u.onrender.com",
+ "commit": "553cc8c",
+ "llm_model": "openai/gpt-oss-120b (Groq), temperature 0",
+ "note": "Fetched from the live demo. LLM-only plans are frozen in src/tastewalk/example_baselines.json. Place names in llm_stops are LLM output; no Qloo response data is stored here (Qloo terms). Walking is estimated (straight line x 1.3).",
  "totals": {
   "llm_stops": 24,
   "located_in_qloo": 11,
-  "chain_unclear": 0,
   "openstreetmap_only": 6,
   "found_in_neither": 7,
   "closed_at_planned_time": 1,
   "tastewalk_stops": 24,
-  "tastewalk_with_hours": 18
+  "tastewalk_with_hours": 18,
+  "template_explanations": 0
  },
  "rows": [
   {
@@ -65,7 +66,7 @@
   {
    "example": "design",
    "tastewalk_stops": 6,
-   "tastewalk_km_estimated": 4.34,
+   "tastewalk_km_estimated": 4.42,
    "tastewalk_longest_leg_min": 20,
    "tastewalk_stops_with_hours": 4,
    "llm_km_between_located": 2.3,
@@ -112,8 +113,8 @@
   {
    "example": "anime",
    "tastewalk_stops": 6,
-   "tastewalk_km_estimated": 2.89,
-   "tastewalk_longest_leg_min": 10,
+   "tastewalk_km_estimated": 3.63,
+   "tastewalk_longest_leg_min": 16,
    "tastewalk_stops_with_hours": 5,
    "llm_km_between_located": 2.03,
    "llm_longest_leg_min": 27,
@@ -159,8 +160,8 @@
   {
    "example": "streetwear",
    "tastewalk_stops": 6,
-   "tastewalk_km_estimated": 4.45,
-   "tastewalk_longest_leg_min": 22,
+   "tastewalk_km_estimated": 3.76,
+   "tastewalk_longest_leg_min": 17,
    "tastewalk_stops_with_hours": 5,
    "llm_km_between_located": 0.0,
    "llm_longest_leg_min": 0,

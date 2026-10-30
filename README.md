@@ -1,18 +1,35 @@
-<h1 align="center">TasteWalk</h1>
-<p align="center"><b>Tell it what you love. Get a walkable day built around your taste, not the tourist list.<br>Then see what an AI alone would have told you, fact-checked.</b></p>
+<div align="center">
 
-<p align="center">
-  <a href="https://tastewalk-fy6u.onrender.com/?example=indie"><b>Live demo</b></a> ·
-  <a href="#the-proof">The proof</a> ·
-  <a href="#how-it-works">How it works</a> ·
-  <a href="docs/architecture.md">Architecture</a>
-</p>
+# TasteWalk
 
-Built for the **Qloo Agentic Hackathon 2026**. City: Vancouver.
+### Tell it what you love. Get a walkable day built around your taste, not the tourist list.
 
-> The demo runs on a free plan: if it was asleep, the first load can take about a minute.
+Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph finds the places in Vancouver that people with your taste love, agents plan a real walking day and explain every stop with the favorites that drove it, and a fact-checker shows what an AI alone would have told you instead.
 
-![TasteWalk results: Qloo-vs-LLM scorecard, walking route and why-it-fits cards](docs/img/hero.jpg)
+**[Live demo](https://tastewalk-fy6u.onrender.com/?example=indie)** · **[Demo video](#demo-video)** · **[The proof](#the-proof)** · **[How it works](#how-it-works)**
+
+[![Qloo Agentic Hackathon](https://img.shields.io/badge/hackathon-Qloo%20Agentic-d9480f)](#)
+[![Qloo taste graph](https://img.shields.io/badge/taste%20graph-Qloo%20Insights-1d1a17)](#what-makes-it-qloo-powered)
+[![LLM](https://img.shields.io/badge/LLM-gpt--oss--120b%20on%20Groq-f55036)](#how-it-works)
+[![OpenStreetMap](https://img.shields.io/badge/second%20source-OpenStreetMap-7ebc6f)](#the-proof)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+<sub>Built for the Qloo Agentic Hackathon 2026 · City: Vancouver · The demo runs on a free plan: if it was asleep, the first load can take about a minute.</sub>
+
+</div>
+
+---
+
+## At a glance
+
+| | |
+|---|---|
+| **18.4 km vs 3.1 km**: an AI-only "walking day" vs ours, for the same tastes. Qloo located all 6 of its places; the Orpheum is closed when you'd arrive | **7 of 24** places an AI alone named couldn't be found in Qloo or OpenStreetMap, across 4 example tastes |
+| **Every stop is a Qloo place** with an ID, coordinates and hours where Qloo has them | **"Because you love X"** on every stop, from Qloo's explainability, not LLM guesswork |
+
+![TasteWalk results: the proof headline, the walking route on a map, and why-it-fits cards next to the fact-checked LLM-only plan](docs/img/hero.jpg)
+
+<a id="demo-video"></a>**Demo video (1:41):** linked on the Devpost page (YouTube link added at submission).
 
 ## What it does
 You enter a few favorites (artists, films, shows, books, brands). Then:
@@ -40,9 +57,8 @@ no leg is over 15 minutes.
 | Across the 4 examples | TasteWalk (Qloo) | LLM only |
 |---|---|---|
 | Can the place be found? | 24 of 24 Qloo places (by construction) | **11** in Qloo · **6** only on OpenStreetMap · **7 in neither** |
-| Walking | 2.9-4.5 km per day, longest leg 22 min | indie: 18.4 km, longest leg 72 min; others can't be estimated for most stops |
+| Walking | 3.1-4.4 km per day, longest leg 20 min | indie: 18.4 km, longest leg 72 min; others can't be estimated for most stops |
 | Open at the planned time | checked for 18 of 24 (where Qloo has hours), swaps out closed stops | 1 closed; most can't be checked |
-| Same tourist spots? | 24 stops across 4 tastes | Granville Island Public Market and the Vancouver Art Gallery in 3 of 4 plans |
 | Why each stop | which of your favorites drove the pick (Qloo explainability) | the LLM's own words |
 
 The first column is grounded by construction: that is the point. The question is what you get
@@ -66,6 +82,31 @@ recommend, explain or fact-check.
 | Fact-check | `GET /search` for each LLM-named place, then `GET /v2/insights` with `filter.results.entities` | locate and score another plan's places (OpenStreetMap as a second source) |
 
 Verified API notes: [docs/research/01-qloo-api.md](docs/research/01-qloo-api.md).
+
+## From request to result (one example)
+The indie profile, step by step. IDs are shortened; Qloo response data is not stored in this repo
+(Qloo's terms), so fields are described rather than pasted.
+
+1. **Resolve each favorite:** `GET /search?query=Arcade Fire&types=urn:entity:artist&take=5`
+   returns entities; we keep the first whose name matches the query (`entity_id` like `F4C7…`).
+2. **Ask for places, one call per part of the day** (coffee, culture, shopping, food, drinks):
+   ```
+   GET /v2/insights
+     filter.type=urn:entity:place
+     signal.interests.entities=<Arcade Fire>,<Radiohead>,<Amélie>,<Lost in Translation>
+     filter.location=POINT(-123.118 49.282)   filter.location.radius=4000
+     filter.tags=urn:tag:category:place:record_store,urn:tag:category:place:book_store,...
+     feature.explainability=true   take=15
+   ```
+   Each place comes back with `location.lat/lon`, `properties.hours`, `query.affinity`, tags
+   (category, ambience) and `query.explainability["signal.interests.entities"]`: the share each
+   favorite contributed. That share becomes the ♥ chips ("because you love Lost in Translation").
+3. **Plan in code + LLM:** a compact walkable area, one coffee / meal / drinks stop, the LLM picks
+   by Qloo ID only, code orders the walk, schedules times and swaps out stops closed on arrival.
+4. **Fact-check the AI-only plan:** for each place the LLM named, `GET /search?types=urn:entity:place`
+   (strict name match), then `GET /v2/insights?filter.type=urn:entity:place&filter.results.entities=<ids>`
+   with the same favorites as signals; OpenStreetMap for names Qloo doesn't know; our routing code
+   for hours and walking.
 
 ## Why it matters
 - **Travelers** get a day picked by a "friend" who shares their taste, instead of the same top-10 list.
@@ -92,6 +133,9 @@ flowchart LR
 ```
 
 - Distances, times, opening hours and route checks are computed in code, never by the LLM.
+- The four example profiles use the code-only planner, so their routes stay identical across
+  restarts and match this README and the video; the LLM still writes their explanations. Your
+  own favorites get the LLM planner.
 - LLM output is JSON validated with Pydantic, and retried with the error if invalid.
 - If the LLM is unavailable (rate limit, outage), the Qloo route still ships with template text.
 - Every Qloo and LLM response is cached on the server by request hash; the example profiles are
@@ -135,6 +179,8 @@ A GitHub Actions job pings `/healthz` every 10 minutes (set the repo variable `D
   never "doesn't exist". Name matching is strict on purpose and can miss a real match.
 - **Results** are 4 profiles with one recorded LLM-only plan each; a fresh LLM plan differs
   from run to run (custom favorites always get a fresh one).
+- **Sub-venues** the LLM names ("Vancouver Art Gallery – Japanese Art Exhibit") are credited to
+  the venue if the venue is found; we don't check that the exhibit or stall exists.
 - **Independent places**: a short list of chains (H&M, Starbucks...) is excluded by design;
   Qloo's popularity score couldn't separate chains from local favorites.
 - **The LLM-only baseline** is a plain one-shot prompt; it isn't told the weekday, and is

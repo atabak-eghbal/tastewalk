@@ -7,7 +7,7 @@ Turn what you love into a walkable Vancouver day from Qloo's taste graph, then f
 
 ## Inspiration
 Every "things to do in Vancouver" list is the same: Granville Island, the Art Gallery, the
-same steam clock. Ask a general-purpose AI and you get that list back, reworded, and studies of AI
+same steam clock. Asked for an indie-music day, an AI alone sent us to Granville Island too. Ask a general-purpose AI and you get that list back, reworded, and studies of AI
 trip plans keep finding places that don't exist, stops scheduled while they're closed, and stops
 far apart. The best days in a new city happen when a friend who *gets* your taste walks you
 around. We wanted to build that friend, and to prove it beats the AI-only answer rather than claim it.
@@ -37,8 +37,7 @@ closed when you'd arrive. TasteWalk: 3.1 km, no leg over 15 minutes.
 | Across the 4 examples | TasteWalk (Qloo) | LLM only |
 |---|---|---|
 | Can the place be found? | 24 of 24 Qloo places (by construction) | 11 in Qloo · 6 only on OpenStreetMap · 7 in neither |
-| Walking | 2.9-4.5 km per day, longest leg 22 min | indie 18.4 km, longest leg 72 min |
-| Same tourist spots? | 24 stops across 4 tastes | Granville Island Market and the Art Gallery in 3 of 4 plans |
+| Walking | 3.1-4.4 km per day, longest leg 20 min | indie 18.4 km, longest leg 72 min |
 | Why each stop | which of your favorites drove it (Qloo explainability) | the LLM's own words |
 
 "Found in neither" doesn't prove a place is invented (both sources have gaps), and the app says

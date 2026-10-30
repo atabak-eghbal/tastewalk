@@ -38,7 +38,10 @@ docs/architecture.md and README.md.
   the Orpheum is closed on arrival. TasteWalk: 3.1 km, no leg over 15 min.
 - 4 examples, 24 LLM-only stops: 11 located in Qloo, 6 only on OpenStreetMap, 7 in neither.
   Granville Island Public Market and the Vancouver Art Gallery appear in 3 of 4 LLM-only plans.
-- TasteWalk: 24 Qloo places, 2.9-4.5 km per day, longest leg 22 min, hours checked for 18/24.
+- TasteWalk: 24 Qloo places, 3.1-4.4 km per day, longest leg 20 min, hours known for 18/24.
+- The 4 examples use the code-only planner (stable routes); the LLM still writes explanations
+  and plans custom favorites. Rebuild numbers from the live app: `uv run python scripts/results_from_live.py`.
+- Groq free: 200k tokens/day per model; LLM falls back to gpt-oss-20b when gpt-oss-120b is spent.
 
 ## Remaining work, in order
 1. **Video v3** (Vancouver, static shots + hard cuts, NO zoom/pan/animated scroll; Atabak dislikes
