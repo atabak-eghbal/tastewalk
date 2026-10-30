@@ -9,7 +9,10 @@ flowchart LR
     P --> C[Critic agent<br/>why it fits, sanity check]
     C --> UI[UI: map + timeline + why cards]
     U --> B[Baseline: LLM only]
-    B --> UI
+    B --> F[Fact-checker<br/>no LLM]
+    F -->|search: locate each LLM place| Q
+    F -->|insights + filter.results.entities: score them| Q
+    F --> UI
 ```
 
 ## Data contracts (Pydantic, `src/tastewalk/schemas.py`)
@@ -20,16 +23,18 @@ flowchart LR
 - `Stop` - place, arrive/leave time, why_it_fits (Qloo itinerary only; place always has a qloo_id)
 - `BaselineStop` - name, category, why (LLM-only, no Qloo ID, coordinates not trusted)
 - `BaselineItinerary` - ordered BaselineStops
-- `Comparison` - qloo_itinerary, baseline_itinerary
+- `StopCheck` - one LLM stop as Qloo sees it: found, Qloo ID/name/coords, open at planned time, affinity, walk from previous
+- `BaselineAudit` - StopChecks plus totals (found/total, closed, walking km, average affinity for both plans)
+- `Comparison` - profile, qloo_itinerary, baseline_itinerary, baseline_audit
 
-## Planned layout
+## Layout
 ```
 src/tastewalk/
   config.py      # env
   qloo.py        # Qloo client: search, insights, caching
   llm.py         # OpenAI-compatible client
   schemas.py
-  taste_agent.py planner.py critic.py baseline.py
+  taste_agent.py planner.py critic.py baseline.py fact_check.py
   routing.py     # haversine x detour factor (OSRM optional), walking time, ordering
   loop.py        # orchestration, yields events
   cli.py

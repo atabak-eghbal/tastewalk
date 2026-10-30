@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-30",
+  "commit": "d369340",
+  "llm_model": "openai/gpt-oss-120b",
+  "note": "Aggregate numbers only; no Qloo response data (Qloo terms).",
+  "rows": [
+    {
+      "example": "indie",
+      "qloo_stops": 6,
+      "qloo_km": 4.2,
+      "qloo_walk_min": 56,
+      "qloo_with_hours": 6,
+      "qloo_affinity": 0.792,
+      "llm_stops": 6,
+      "llm_located": 2,
+      "llm_closed": 0,
+      "llm_km_located": 2.25,
+      "llm_longest_leg_min": 30,
+      "llm_affinity": 0.779
+    },
+    {
+      "example": "design",
+      "qloo_stops": 6,
+      "qloo_km": 2.81,
+      "qloo_walk_min": 37,
+      "qloo_with_hours": 6,
+      "qloo_affinity": 0.807,
+      "llm_stops": 6,
+      "llm_located": 1,
+      "llm_closed": 0,
+      "llm_km_located": 0.0,
+      "llm_longest_leg_min": 0,
+      "llm_affinity": 0.728
+    },
+    {
+      "example": "kculture",
+      "qloo_stops": 6,
+      "qloo_km": 3.25,
+      "qloo_walk_min": 43,
+      "qloo_with_hours": 6,
+      "qloo_affinity": 0.758,
+      "llm_stops": 6,
+      "llm_located": 1,
+      "llm_closed": 0,
+      "llm_km_located": 0.0,
+      "llm_longest_leg_min": 0,
+      "llm_affinity": 0.615
+    },
+    {
+      "example": "streetwear",
+      "qloo_stops": 6,
+      "qloo_km": 4.83,
+      "qloo_walk_min": 65,
+      "qloo_with_hours": 6,
+      "qloo_affinity": 0.88,
+      "llm_stops": 6,
+      "llm_located": 0,
+      "llm_closed": 0,
+      "llm_km_located": 0.0,
+      "llm_longest_leg_min": 0,
+      "llm_affinity": null
+    }
+  ]
+}
