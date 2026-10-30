@@ -114,7 +114,37 @@ class BaselineItinerary(BaseModel):
     stops: list[BaselineStop]
 
 
+class StopCheck(BaseModel):
+    """Qloo's check of one LLM-only stop: does it exist, is it open, how far, how well it fits."""
+
+    name: str
+    found: bool
+    qloo_id: str | None = None
+    qloo_name: str | None = None
+    address: str | None = None
+    lat: float | None = None
+    lon: float | None = None
+    open: bool | None = None  # None: no hours from Qloo, or no time from the LLM
+    affinity: float | None = None
+    walk_minutes_from_prev: int | None = None  # from the previous found stop
+
+
+class BaselineAudit(BaseModel):
+    """The LLM-only plan, fact-checked with Qloo data and the same routing code as our plan."""
+
+    stops: list[StopCheck]
+    found: int
+    total: int
+    closed: int
+    walk_km: float  # between found stops, in the LLM's order
+    longest_leg_min: int
+    avg_affinity: float | None = None
+    qloo_avg_affinity: float | None = None  # our route, same Qloo scale
+    qloo_km: float
+
+
 class Comparison(BaseModel):
     profile: TasteProfile
     qloo_itinerary: Itinerary
     baseline_itinerary: BaselineItinerary | None = None
+    baseline_audit: BaselineAudit | None = None

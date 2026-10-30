@@ -14,6 +14,7 @@ from .baseline import baseline_itinerary
 from .cache import DiskCache
 from .config import Settings, load_settings
 from .critic import critique
+from .fact_check import fact_check
 from .llm import LLM, LLMError
 from .planner import plan
 from .qloo import QlooClient, QlooError
@@ -23,7 +24,7 @@ from .taste_agent import NoTasteSignal, build_profile, find_candidates
 
 @dataclass
 class Event:
-    step: str  # taste | candidates | plan | critic | baseline | done | error
+    step: str  # taste | candidates | plan | critic | baseline | audit | done | error
     message: str
     data: Any = None
 
@@ -73,10 +74,28 @@ def run(
             except LLMError as e:
                 yield Event("baseline", f"LLM-only baseline unavailable: {e}")
 
+        audit = None
+        if baseline is not None:
+            try:
+                audit = fact_check(qloo, baseline, profile, itin)
+                yield Event(
+                    "audit",
+                    f"Qloo checked the LLM plan: {audit.found}/{audit.total} places found, "
+                    f"{audit.walk_km} km walking",
+                    audit,
+                )
+            except QlooError as e:
+                yield Event("audit", f"Fact-check unavailable: {e}")
+
         yield Event(
             "done",
             "Itinerary ready",
-            Comparison(profile=profile, qloo_itinerary=itin, baseline_itinerary=baseline),
+            Comparison(
+                profile=profile,
+                qloo_itinerary=itin,
+                baseline_itinerary=baseline,
+                baseline_audit=audit,
+            ),
         )
     except (QlooError, NoTasteSignal) as e:
         yield Event("error", str(e))

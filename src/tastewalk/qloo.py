@@ -106,6 +106,16 @@ class QlooClient:
             params["filter.tags"] = ",".join(category_tags)
         return _results_list(self._get(QLOO_INSIGHTS_PATH, params))
 
+    def score_places(self, signal_ids: list[str], place_ids: list[str]) -> list[dict[str, Any]]:
+        """Score specific places against the user's favorites (verified: `filter.results.entities`)."""
+        params = {
+            "filter.type": PLACE_TYPE,
+            "signal.interests.entities": ",".join(signal_ids),
+            "filter.results.entities": ",".join(place_ids),
+            "take": len(place_ids),
+        }
+        return _results_list(self._get(QLOO_INSIGHTS_PATH, params))
+
     # --- typed helpers -----------------------------------------------------------------
     def resolve(self, query: str, entity_type: str) -> ResolvedEntity | None:
         results = self.search(query, entity_type)
