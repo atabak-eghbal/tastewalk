@@ -11,8 +11,10 @@ Verified against the hackathon API on 2026-10-30 (see docs/research/01-qloo-api.
 
 from __future__ import annotations
 
+import difflib
 import logging
 import re
+import unicodedata
 from datetime import time
 from typing import Any
 
@@ -119,9 +121,11 @@ class QlooClient:
     # --- typed helpers -----------------------------------------------------------------
     def resolve(self, query: str, entity_type: str) -> ResolvedEntity | None:
         results = self.search(query, entity_type)
-        if not results:
+        # Qloo search always returns something; keep its ranking but require a similar name,
+        # so a typo still resolves ('Radiohedd') and garbage doesn't ('<img ...>' -> 'Bell X1').
+        best = next((r for r in results if _similar(query, r.get("name", ""))), None)
+        if best is None:
             return None
-        best = results[0]
         qid = best.get("entity_id") or best.get("id")
         if not qid:
             return None
@@ -150,6 +154,18 @@ class QlooClient:
 
 
 # --- parsing (defensive: unknown shapes are skipped, not guessed) -------------------------
+def _norm(s: str) -> str:
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
+    return " ".join(re.findall(r"[a-z0-9]+", s))
+
+
+def _similar(query: str, name: str) -> bool:
+    q, n = _norm(query), _norm(name)
+    if not q or not n:
+        return False
+    return q in n or n in q or difflib.SequenceMatcher(None, q, n).ratio() >= 0.75
+
+
 def _results_list(data: dict[str, Any]) -> list[dict[str, Any]]:
     res = data.get("results", data)
     if isinstance(res, dict):

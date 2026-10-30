@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from datetime import time
 from enum import Enum
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class FavoriteType(str, Enum):
-    """Kinds of favorites a user can enter. Values are Qloo entity type URNs (to verify)."""
+    """Kinds of favorites a user can enter. Values are Qloo search type URNs (verified)."""
 
     artist = "urn:entity:artist"
     movie = "urn:entity:movie"
@@ -22,12 +23,14 @@ class FavoriteType(str, Enum):
 
 
 class Favorite(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     name: str = Field(min_length=1, max_length=120)
     type: FavoriteType
 
 
 class UserInput(BaseModel):
-    city: str = "Montreal"
+    city: Literal["Montreal"] = "Montreal"  # the only city with a configured centre and radius
     favorites: list[Favorite] = Field(min_length=1, max_length=8)
     start_time: time = time(10, 0)
     max_stops: int = Field(default=6, ge=2, le=10)

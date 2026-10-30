@@ -8,13 +8,14 @@ orders them (coffee first, drinks last, shortest walk in between) and computes t
 from __future__ import annotations
 
 import logging
+import re
 from collections import Counter
 from datetime import date
 
 from pydantic import BaseModel
 
 from .llm import LLM, LLMError
-from .routing import is_open, order_day, order_stops, path_km, schedule, walk_km
+from .routing import is_open, order_day, path_km, schedule, walk_km
 from .schemas import Itinerary, Place, TasteProfile, UserInput
 from .taste_agent import SLOT_ORDER
 
@@ -25,6 +26,105 @@ DAY_ORDER_MAX_DETOUR = 1.3  # accept day-rhythm order if <= 30% longer than shor
 POOL_SIZE = 20
 MAX_PER_CATEGORY = 2
 SLOT_BONUS = 1.5  # worth more than one extra high-affinity place of a slot we already have
+
+
+MEAL_WORDS = (
+    "restaurant",
+    "steak",
+    "diner",
+    "pizza",
+    "sushi",
+    "bbq",
+    "barbecue",
+    "bistro",
+    "food",
+    "deli",
+    "eatery",
+    "ramen",
+    "noodle",
+    "burger",
+    "grill",
+    "taqueria",
+)
+DRINK_WORDS = {"bar", "pub", "lounge", "cocktail", "brewery", "wine", "tavern", "nightclub"}
+COFFEE_WORDS = ("cafe", "café", "coffee", "bakery", "tea", "patisserie", "pâtisserie")
+KIND_SLOT = {"meal": "food", "drinks": "drinks", "coffee": "coffee"}
+# Product choice: TasteWalk routes you to independent places. Qloo's popularity score can't do
+# this (it rates La Belle Province 0.32 and the local Olive et Gourmando 0.99), so: a short list.
+CHAINS = {
+    "h&m",
+    "urban outfitters",
+    "zara",
+    "uniqlo",
+    "gap",
+    "starbucks",
+    "tim hortons",
+    "mcdonald's",
+    "la belle province",
+    "subway",
+    "sephora",
+    "lululemon",
+    "apple store",
+    "foot locker",
+    "a&w",
+    "second cup",
+    "dollarama",
+    "winners",
+    "old navy",
+}
+
+
+def is_chain(p: Place) -> bool:
+    return p.name.lower().split(" - ")[0].strip() in CHAINS
+
+
+def kind(p: Place) -> str:
+    """meal | drinks | coffee | other, from Qloo's category ('Italian restaurant', 'Lounge bar')."""
+    cat = (p.category or "").lower()
+    if "restaurant" in cat:
+        return "meal"
+    if DRINK_WORDS & set(re.findall(r"\w+", cat)) or "night club" in cat:
+        return "drinks"
+    if any(w in cat for w in MEAL_WORDS):
+        return "meal"
+    if any(w in cat for w in COFFEE_WORDS):
+        return "coffee"
+    return "other"
+
+
+def balance(chosen: list[Place], pool: list[Place], n: int) -> list[Place]:
+    """A day's rhythm: one coffee, one meal and one drinks stop when the pool has them (two
+    coffees and meals from 7 stops); the rest culture and shopping; no chains. The planner's own
+    picks come first. Relaxes the quotas only if the pool runs out. Slots are relabelled from the
+    category, so a restaurant is never the "coffee" stop."""
+    cap = 2 if n >= 7 else 1
+    quota = {"meal": cap, "drinks": 1, "coffee": cap}
+    options = [p for p in [*chosen, *pool] if not is_chain(p)]
+    kept: list[Place] = []
+    for k in ("coffee", "meal", "drinks"):
+        first = next((p for p in options if kind(p) == k), None)
+        if first is not None and len(kept) < n:
+            kept.append(first)
+    count = Counter(kind(p) for p in kept)
+    for p in options:
+        if len(kept) >= n:
+            break
+        k = kind(p)
+        if p in kept or count[k] >= quota.get(k, n):
+            continue
+        kept.append(p)
+        count[k] += 1
+    kept += [p for p in options if p not in kept][: n - len(kept)]
+    return [_relabel(p) for p in kept]
+
+
+def _relabel(p: Place) -> Place:
+    k = kind(p)
+    if k in KIND_SLOT:
+        return p.model_copy(update={"slot": KIND_SLOT[k]})
+    if p.slot in KIND_SLOT.values():
+        return p.model_copy(update={"slot": None})
+    return p
 
 
 class PlannerPicks(BaseModel):
@@ -102,16 +202,17 @@ def pick_with_llm(llm: LLM, pool: list[Place], profile: TasteProfile, n: int) ->
 
 
 def order_by_day(chosen: list[Place]) -> list[Place]:
-    """Coffee first and drinks (or food) last, unless that makes the walk much longer."""
+    """Drinks always last (nobody starts a day at a bar; the pool is compact, so the cost is
+    small). Coffee first too, unless that makes the walk much longer."""
     first = next((p for p in chosen if p.slot == "coffee"), None)
     last = next((p for p in chosen if p.slot == "drinks"), None) or next(
         (p for p in chosen if p.slot == "food"), None
     )
-    shortest = order_stops(chosen)
     day = order_day(chosen, first, last)
-    if path_km(day) <= DAY_ORDER_MAX_DETOUR * path_km(shortest) + 0.2:
+    no_coffee_pin = order_day(chosen, None, last)
+    if path_km(day) <= DAY_ORDER_MAX_DETOUR * path_km(no_coffee_pin) + 0.2:
         return day
-    return shortest
+    return no_coffee_pin
 
 
 def schedule_open(chosen: list[Place], pool: list[Place], user: UserInput, day: date):
@@ -125,8 +226,9 @@ def schedule_open(chosen: list[Place], pool: list[Place], user: UserInput, day: 
         if closed is None:
             return stops, check
         bad = closed.place
-        spares = [p for p in pool if p not in chosen and walk_km(p, bad) <= POOL_RADIUS_KM]
-        spares.sort(key=lambda p: (p.slot != bad.slot, -(p.affinity or 0)))
+        taken = {kind(p) for p in chosen if p is not bad} - {"other"}
+        spares = [p for p in pool if p not in chosen and not is_chain(p)]
+        spares.sort(key=lambda p: (kind(p) != kind(bad), kind(p) in taken, -(p.affinity or 0)))
         fit = next(
             (
                 p
@@ -161,7 +263,9 @@ def plan(
     if len(chosen) < min(n, len(pool)):
         extra = [p for p in pick_deterministic(pool, len(pool)) if p not in chosen]
         chosen += extra[: n - len(chosen)]
-    stops, check = schedule_open(chosen[:n], pool, user, day or date.today())
+    chosen = balance(chosen, pick_deterministic(pool, len(pool)), n)
+    pool = [_relabel(p) for p in pool]
+    stops, check = schedule_open(chosen, pool, user, day or date.today())
     return Itinerary(
         city=user.city,
         start_time=user.start_time,

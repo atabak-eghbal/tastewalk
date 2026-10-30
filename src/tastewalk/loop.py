@@ -14,6 +14,7 @@ from .baseline import baseline_itinerary
 from .cache import DiskCache
 from .config import Settings, load_settings
 from .critic import critique
+from .examples import frozen_baseline
 from .fact_check import fact_check
 from .llm import LLM, LLMError
 from .osm import OSMClient
@@ -54,8 +55,19 @@ def run(
         qloo, llm = make_clients(load_settings())
     try:
         profile = build_profile(qloo, user)
-        names = ", ".join(e.name for e in profile.entities) or "nothing"
-        yield Event("taste", f"Matched {len(profile.entities)} favorites in Qloo: {names}", profile)
+        if not profile.entities:
+            missing = ", ".join(profile.unresolved)
+            yield Event(
+                "error",
+                f"Qloo couldn't find: {missing}. Check the spelling, or the type "
+                "(artist, movie, brand...).",
+            )
+            return
+        names = ", ".join(e.name for e in profile.entities)
+        missed = f" (not found: {', '.join(profile.unresolved)})" if profile.unresolved else ""
+        yield Event(
+            "taste", f"Matched {len(profile.entities)} favorites in Qloo: {names}{missed}", profile
+        )
 
         candidates = find_candidates(qloo, user, profile)
         yield Event("candidates", f"Qloo found {len(candidates)} places in {user.city}", candidates)
@@ -69,8 +81,10 @@ def run(
         itin = critique(itin, profile, llm)
         yield Event("critic", "Explained each stop", itin)
 
-        baseline = None
-        if with_baseline and llm is not None:
+        baseline = frozen_baseline(user) if with_baseline else None
+        if baseline is not None:
+            yield Event("baseline", "LLM-only plan (recorded Oct 30 for this example)", baseline)
+        elif with_baseline and llm is not None:
             try:
                 baseline = baseline_itinerary(llm, user)
                 yield Event("baseline", "LLM-only itinerary ready", baseline)

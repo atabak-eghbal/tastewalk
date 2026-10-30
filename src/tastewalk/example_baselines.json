@@ -1,0 +1,169 @@
+{
+ "note": "LLM-only plans for the example profiles, recorded 2026-10-30 with openai/gpt-oss-120b on Groq. Frozen so the live demo, README and video show the same numbers. LLM output, not Qloo data.",
+ "plans": {
+  "indie": {
+   "city": "Montreal",
+   "stops": [
+    {
+     "name": "Le Saint-Sulpice",
+     "category": "Cafe",
+     "why": "Cozy café in the Latin Quarter with a relaxed vibe reminiscent of the introspective mood of Lost in Translation, perfect for starting the day.",
+     "time": "11:00"
+    },
+    {
+     "name": "Café Olimpico",
+     "category": "Cafe",
+     "why": "Popular spot in Mile End, a neighborhood where Arcade Fire formed; its indie atmosphere aligns with your love for the band.",
+     "time": "12:15"
+    },
+    {
+     "name": "Phonopolis Vinyl Record Store",
+     "category": "Record Store",
+     "why": "Offers extensive collections of indie rock, including Radiohead and Arcade Fire vinyl, catering to your music taste.",
+     "time": "13:30"
+    },
+    {
+     "name": "Le Balcon du Musée des beaux-arts de Montréal",
+     "category": "Museum",
+     "why": "The museum often hosts film retrospectives and whimsical art installations echoing the aesthetic of Amélie.",
+     "time": "14:45"
+    },
+    {
+     "name": "Parc du Mont-Royal – Belvédère Kondiaronk",
+     "category": "Park",
+     "why": "Panoramic city views provide a contemplative setting similar to the reflective tone of Lost in Translation.",
+     "time": "16:00"
+    },
+    {
+     "name": "Cinéma du Parc",
+     "category": "Cinema",
+     "why": "Independent cinema showing French and art-house films, ideal for fans of Amélie and indie culture.",
+     "time": "17:15"
+    }
+   ]
+  },
+  "design": {
+   "city": "Montreal",
+   "stops": [
+    {
+     "name": "Aesop Boutique – Rue Saint-Paul",
+     "category": "Shop",
+     "why": "Offers the minimalist, plant‑based skincare aesthetic you love from Aesop, housed in a heritage building that mirrors the brand’s clean design.",
+     "time": "10:00"
+    },
+    {
+     "name": "Muji Montréal – Rue Saint‑Denis",
+     "category": "Shop",
+     "why": "Muji’s Japanese minimalism in home goods and stationery matches your appreciation for the brand’s simple, functional style.",
+     "time": "11:15"
+    },
+    {
+     "name": "Café Olimpico – Mile End",
+     "category": "Cafe",
+     "why": "A sleek, design‑focused café where you can enjoy expertly brewed coffee in a setting that echoes the aesthetic of Aesop and Muji.",
+     "time": "12:30"
+    },
+    {
+     "name": "Marché Jean‑Talon",
+     "category": "Market",
+     "why": "Vibrant market offering fresh, high‑quality ingredients – a nod to the culinary storytelling of Chef’s Table and the food‑centric drama of The Bear.",
+     "time": "13:45"
+    },
+    {
+     "name": "Le Bremner – Old Port",
+     "category": "Restaurant",
+     "why": "Chef‑driven tasting menu with an open kitchen, delivering the intense, creative cooking experience reminiscent of The Bear and Chef’s Table.",
+     "time": "15:30"
+    },
+    {
+     "name": "Atelier de cuisine – La Guilde Culinaire",
+     "category": "Cooking Class",
+     "why": "Hands‑on class focusing on modern techniques and storytelling through food, aligning with the chef‑centric narratives you enjoy.",
+     "time": "17:45"
+    }
+   ]
+  },
+  "kculture": {
+   "city": "Montreal",
+   "stops": [
+    {
+     "name": "K-Pop Café K-Box",
+     "category": "Cafe",
+     "why": "A K‑pop themed café playing BTS hits and serving Korean snacks, perfect for your love of BTS.",
+     "time": "12:00"
+    },
+    {
+     "name": "Korean Cultural Centre of Montreal",
+     "category": "Cultural Center",
+     "why": "Hosts exhibitions and events about Korean film and TV, often featuring screenings of Parasite and discussions of Squid Game.",
+     "time": "13:00"
+    },
+    {
+     "name": "Miyako Korean BBQ",
+     "category": "Restaurant",
+     "why": "Authentic Korean BBQ where you can enjoy dishes featured in Parasite and soak in Korean atmosphere.",
+     "time": "14:00"
+    },
+    {
+     "name": "Gentle Monster Pop‑up at Rue Saint‑Laurent",
+     "category": "Shop",
+     "why": "A temporary Gentle Monster boutique showcasing avant‑garde eyewear, aligning with your brand interest.",
+     "time": "15:30"
+    },
+    {
+     "name": "Cinema du Parc – Korean Film Night",
+     "category": "Cinema",
+     "why": "Shows classic Korean movies like Parasite; a great way to experience Korean cinema on foot from the previous stop.",
+     "time": "17:00"
+    },
+    {
+     "name": "Street Art Mural at Rue Saint‑Denis",
+     "category": "Art Installation",
+     "why": "Features a vibrant mural inspired by Squid Game’s iconic motifs, perfect for a final photo op.",
+     "time": "19:00"
+    }
+   ]
+  },
+  "streetwear": {
+   "city": "Montreal",
+   "stops": [
+    {
+     "name": "Le Saint-Sulpice Hip-Hop Lounge",
+     "category": "Music Venue",
+     "why": "Live hip‑hop shows and DJ sets echo Kendrick Lamar’s vibe, perfect for a midday start.",
+     "time": "12:00"
+    },
+    {
+     "name": "Le 5e Boutique",
+     "category": "Sneaker Store",
+     "why": "Carries Supreme‑inspired apparel and Nike collaborations, matching your streetwear taste.",
+     "time": "13:30"
+    },
+    {
+     "name": "Nike Montreal Flagship",
+     "category": "Retail Store",
+     "why": "Features the latest Nike drops and a custom sneaker customization bar for fans of the brand.",
+     "time": "15:00"
+    },
+    {
+     "name": "Street Art Walk on Rue Saint-Laurent",
+     "category": "Street Art Gallery",
+     "why": "Vibrant murals reflect urban culture similar to the aesthetic of Atlanta and hip‑hop.",
+     "time": "16:30"
+    },
+    {
+     "name": "Cafe Le Petit Boulanger",
+     "category": "Cafe",
+     "why": "Offers a relaxed spot with a playlist of contemporary rap, including Kendrick Lamar tracks.",
+     "time": "17:30"
+    },
+    {
+     "name": "Bar Le Saint-Claude (Atlanta Night)",
+     "category": "Bar",
+     "why": "Hosts weekly Atlanta TV‑show screenings and Southern‑style cocktails, tying into your love for the series.",
+     "time": "19:00"
+    }
+   ]
+  }
+ }
+}

@@ -50,6 +50,22 @@ SLOTS: dict[str, list[str]] = {
 SLOT_ORDER = list(SLOTS)
 
 
+# Tag types that describe a taste across domains. Excludes plot keywords ("Knife"), business
+# metadata ("B2C") and Wikipedia categories, which read as noise to a user.
+THEME_TAG_TYPES = (
+    "tag:genre",
+    "subgenre:",
+    "interests:",
+    "lifestyle:",
+    "audience:",
+    "aesthetic_property:",
+    "personal_style:",
+    "core_value:",
+    "cultural_relevance:",
+    "emotional_tone:",
+)
+
+
 class NoTasteSignal(RuntimeError):
     pass
 
@@ -73,11 +89,12 @@ def build_profile(qloo: QlooClient, user: UserInput) -> TasteProfile:
     by_id = {}
     for ent in entities:
         for t in ent.tags:
-            counts[t.id] += 1
-            by_id[t.id] = t
-    # Only themes shared by at least two favorites; a single film's plot tags are noise.
-    shared = [by_id[tid] for tid, n in counts.most_common() if n >= 2]
-    top_tags = list({t.name.lower(): t for t in reversed(shared)}.values())[::-1][:12]
+            if any(k in (t.type or "") for k in THEME_TAG_TYPES):
+                counts[t.id] += 1
+                by_id[t.id] = t
+    # Themes shared by two or more favorites first, then the rest; deduped by name.
+    ranked = [by_id[tid] for tid, _ in counts.most_common()]
+    top_tags = list({t.name.lower(): t for t in reversed(ranked)}.values())[::-1][:10]
     return TasteProfile(entities=entities, unresolved=unresolved, top_tags=top_tags)
 
 

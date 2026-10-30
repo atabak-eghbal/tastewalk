@@ -31,8 +31,8 @@ from tastewalk.schemas import FavoriteType, UserInput
 
 STATIC = Path(__file__).parent / "static"
 log = logging.getLogger("tastewalk.app")
-RATE_LIMIT = 8  # plans per IP per minute (protects Qloo/LLM quotas on the public demo)
-PREWARM_GAP_S = 30  # one plan is ~6k LLM tokens; Groq free allows 8k/min
+RATE_LIMIT = 20  # custom plans per IP per minute (examples are cached and don't count)
+PREWARM_GAP_S = 20  # examples use frozen baselines (~4k LLM tokens each); Groq free: 8k/min
 
 
 def _jsonable(x: Any) -> Any:
@@ -92,13 +92,17 @@ def create_app(fake: bool | None = None) -> FastAPI:
             ],
         }
 
-    def _check_rate(ip: str) -> None:
+    def _rate_ok(ip: str) -> bool:
         now, q = time.monotonic(), hits[ip]
         while q and now - q[0] > 60:
             q.popleft()
+        if not q:
+            hits.pop(ip, None)  # keep the table small
+            q = hits[ip]
         if len(q) >= RATE_LIMIT:
-            raise HTTPException(429, "Too many requests, try again in a minute")
+            return False
         q.append(now)
+        return True
 
     @app.get("/api/plan")
     async def plan(q: str, request: Request) -> EventSourceResponse:
@@ -106,9 +110,14 @@ def create_app(fake: bool | None = None) -> FastAPI:
             user = UserInput.model_validate_json(q)
         except ValidationError as e:
             raise HTTPException(422, e.errors(include_url=False)) from e
-        _check_rate(request.client.host if request.client else "?")
+        is_example = any(ex["input"] == user for ex in EXAMPLES.values())
+        allowed = is_example or _rate_ok(request.client.host if request.client else "?")
 
         async def events():
+            if not allowed:  # an SSE error event: EventSource can't read HTTP status codes
+                msg = "The demo is busy. Try again in a minute, or pick one of the examples."
+                yield {"data": json.dumps({"step": "error", "message": msg, "data": None})}
+                return
             async for ev in iterate_in_threadpool(run(user, qloo, llm, osm=osm)):
                 payload = {"step": ev.step, "message": ev.message, "data": _jsonable(ev.data)}
                 yield {"data": json.dumps(payload)}
