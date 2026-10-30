@@ -124,19 +124,24 @@ class StopCheck(BaseModel):
     address: str | None = None
     lat: float | None = None
     lon: float | None = None
+    ambiguous: bool = False  # several branches match (a chain): no hours/walk claims
+    in_osm: bool | None = None  # not in Qloo: does OpenStreetMap know it? None = not checked
     open: bool | None = None  # None: no hours from Qloo, or no time from the LLM
     affinity: float | None = None
-    walk_minutes_from_prev: int | None = None  # from the previous found stop
+    walk_minutes_from_prev: int | None = None  # from the previous located stop
 
 
 class BaselineAudit(BaseModel):
     """The LLM-only plan, fact-checked with Qloo data and the same routing code as our plan."""
 
     stops: list[StopCheck]
-    found: int
+    found: int  # located in Qloo
+    in_osm: int  # not in Qloo, but OpenStreetMap has a place with that name
+    nowhere: int  # neither Qloo nor OpenStreetMap could find it
     total: int
     closed: int
-    walk_km: float  # between found stops, in the LLM's order
+    hours_checked: int  # located stops whose opening hours could be checked at the LLM's time
+    walk_km: float  # between located stops (unambiguous), in the LLM's order
     longest_leg_min: int
     avg_affinity: float | None = None
     qloo_avg_affinity: float | None = None  # our route, same Qloo scale

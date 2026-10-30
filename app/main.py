@@ -26,6 +26,7 @@ from tastewalk.config import load_settings
 from tastewalk.dev_fake import fake_client
 from tastewalk.examples import EXAMPLES
 from tastewalk.loop import make_clients, run
+from tastewalk.osm import OSMClient
 from tastewalk.schemas import FavoriteType, UserInput
 
 STATIC = Path(__file__).parent / "static"
@@ -51,13 +52,14 @@ def create_app(fake: bool | None = None) -> FastAPI:
         qloo = fake_client(settings.cache_dir / "fake")
     if not settings.has_llm:
         llm = None
+    osm = None if fake else OSMClient(qloo.cache)
     hits: dict[str, deque[float]] = defaultdict(deque)
 
     def prewarm() -> None:
         """Run every example once at boot so judges get instant, cached results."""
         for ex_id, ex in EXAMPLES.items():
             last = None
-            for last in run(ex["input"], qloo, llm):
+            for last in run(ex["input"], qloo, llm, osm=osm):
                 pass
             log.warning("prewarm %s: %s", ex_id, last.step if last else "no events")
             time.sleep(PREWARM_GAP_S)
@@ -107,7 +109,7 @@ def create_app(fake: bool | None = None) -> FastAPI:
         _check_rate(request.client.host if request.client else "?")
 
         async def events():
-            async for ev in iterate_in_threadpool(run(user, qloo, llm)):
+            async for ev in iterate_in_threadpool(run(user, qloo, llm, osm=osm)):
                 payload = {"step": ev.step, "message": ev.message, "data": _jsonable(ev.data)}
                 yield {"data": json.dumps(payload)}
 

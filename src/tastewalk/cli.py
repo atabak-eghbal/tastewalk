@@ -13,6 +13,7 @@ from datetime import time
 
 from .config import load_settings
 from .loop import make_clients, run
+from .osm import OSMClient
 from .schemas import Comparison, Favorite, FavoriteType, UserInput
 
 
@@ -52,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
         print("(no LLM configured: deterministic picks + template explanations)", file=sys.stderr)
 
     result: Comparison | None = None
-    for ev in run(user, qloo, llm, with_baseline=not args.no_baseline):
+    for ev in run(user, qloo, llm, with_baseline=not args.no_baseline, osm=OSMClient(qloo.cache)):
         print(f"[{ev.step}] {ev.message}", file=sys.stderr)
         if ev.step == "error":
             return 1

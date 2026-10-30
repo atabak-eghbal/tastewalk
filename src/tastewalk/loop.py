@@ -16,6 +16,7 @@ from .config import Settings, load_settings
 from .critic import critique
 from .fact_check import fact_check
 from .llm import LLM, LLMError
+from .osm import OSMClient
 from .planner import plan
 from .qloo import QlooClient, QlooError
 from .schemas import Comparison, UserInput
@@ -46,7 +47,9 @@ def run(
     qloo: QlooClient | None = None,
     llm: LLM | None = None,
     with_baseline: bool = True,
+    osm: OSMClient | None = None,
 ) -> Iterator[Event]:
+    """osm: OpenStreetMap lookups for LLM places Qloo doesn't know (None skips that check)."""
     if qloo is None:
         qloo, llm = make_clients(load_settings())
     try:
@@ -77,12 +80,12 @@ def run(
         audit = None
         if baseline is not None:
             try:
-                audit = fact_check(qloo, baseline, profile, itin)
-                walk = f", {audit.walk_km} km between them" if audit.found >= 2 else ""
+                audit = fact_check(qloo, baseline, profile, itin, osm=osm)
+                nowhere = f", {audit.nowhere} found nowhere" if audit.nowhere else ""
                 yield Event(
                     "audit",
-                    f"Qloo fact-checked the LLM plan: located {audit.found} of {audit.total} "
-                    f"places{walk}",
+                    f"Fact-checked the LLM plan: Qloo located {audit.found} of {audit.total} "
+                    f"places{nowhere}",
                     audit,
                 )
             except QlooError as e:
