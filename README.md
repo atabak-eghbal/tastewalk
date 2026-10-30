@@ -33,7 +33,7 @@ Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph 
 
 ## What it does
 **Say, type or tap what you love:** speak a sentence ("I love Radiohead, Ghibli films and
-Patagonia"), type it, or tap from 40+ favorites across music, film, TV, books, games, brands and
+Patagonia"), type it, or tap from 39 favorites across music, film, TV, books, games, brands and
 podcasts. The LLM only extracts the favorites you name; Qloo resolves each one. Then:
 1. **Taste agent** resolves each favorite to a Qloo entity and asks Qloo for places in Vancouver
    that people with that taste love, for each part of the day.

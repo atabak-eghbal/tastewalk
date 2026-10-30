@@ -16,7 +16,7 @@ around. We wanted to build that friend, and to prove it beats the AI-only answer
 TasteWalk turns the things you already love (artists, films, shows, books, brands) into a
 walkable day in Vancouver:
 
-- **Say, type or tap what you love**: speak a sentence, type it, or tap from 40+ favorites
+- **Say, type or tap what you love**: speak a sentence, type it, or tap from 39 favorites
   across music, film, TV, books, games, brands and podcasts. The LLM only extracts what you name.
 - **Your taste in Qloo**: each favorite is matched to a Qloo entity, with the themes they share.
 - **Places that fit**: Qloo recommends places in the city that people with your taste love, for
