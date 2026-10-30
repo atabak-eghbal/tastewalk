@@ -1,5 +1,5 @@
 <h1 align="center">TasteWalk</h1>
-<p align="center"><b>Tell it what you love. Get a walkable day built around your taste, not the tourist list.<br>Then watch Qloo fact-check what an AI alone would have told you.</b></p>
+<p align="center"><b>Tell it what you love. Get a walkable day built around your taste, not the tourist list.<br>Then see what an AI alone would have told you, fact-checked.</b></p>
 
 <p align="center">
   <a href="https://tastewalk-fy6u.onrender.com/?example=indie"><b>Live demo</b></a> ·
@@ -15,27 +15,37 @@ Built for the **Qloo Agentic Hackathon 2026**. First city: Montreal.
 ![TasteWalk results: Qloo-vs-LLM scorecard, walking route and why-it-fits cards](docs/img/hero.jpg)
 
 ## What it does
-You enter a few favorites (artists, films, shows, books, brands). Five agents then:
-1. **Profile** your taste: each favorite is resolved to a Qloo entity.
-2. **Find** places in Montreal that people with that taste love, for each part of the day.
-3. **Plan** a realistic walk: one walkable area, a day rhythm, real times, closed places swapped out.
-4. **Explain** each stop: Qloo's explainability says which of *your* favorites drove the pick.
-5. **Fact-check** an LLM-only plan for the same request: Qloo looks up every place the LLM named.
+You enter a few favorites (artists, films, shows, books, brands). Then:
+1. **Taste agent** resolves each favorite to a Qloo entity and asks Qloo for places in Montreal
+   that people with that taste love, for each part of the day.
+2. **Planner agent** picks a varied day (one coffee, one meal, drinks last, no chains) by Qloo ID,
+   orders it as a walk, schedules real times and swaps out places closed on arrival.
+3. **Critic agent** explains each stop: Qloo's explainability says which of *your* favorites
+   drove the pick, and the LLM turns that into a sentence.
+4. **Baseline**: the same request goes to an LLM with no Qloo.
+5. **Fact-checker** (code, no LLM) looks up every place the LLM named in Qloo, then in
+   OpenStreetMap, and checks hours and walking for those it can locate.
 
 ## The proof
-Four example profiles, one run each (Oct 30), from
-[docs/results/fact_check_examples.json](docs/results/fact_check_examples.json):
+Four example profiles (Oct 30; the LLM-only plans are
+[frozen](src/tastewalk/example_baselines.json) so the demo shows the same numbers), from
+[docs/results/fact_check_examples.json](docs/results/fact_check_examples.json), which lists
+every LLM-named place and its verdict:
 
-| | With Qloo | LLM only |
+| | TasteWalk (Qloo) | LLM only |
 |---|---|---|
-| Stops Qloo can verify (place, coordinates, Qloo ID) | **24 of 24** | **4 of 24** |
-| Opening hours checked at the planned time | 24 of 24 | only the 4 located |
-| Walking distance | measured, 2.8-4.8 km per day | can't be measured for most stops |
-| Taste match (Qloo affinity, where comparable) | higher in 3 of 3 | lower |
+| Stops | 24 Qloo places, each with an ID, address and coordinates | 24 named places |
+| Can the place be found? | all 24 (by construction) | **4** in Qloo (2 are chains, branch unclear) · **8** only on OpenStreetMap · **12 in neither** |
+| Opening hours at the planned time | checked for 23 of 24 | checkable for at most 2 |
+| Walking | estimated for every leg (2.7-4.2 km per day) | can't be estimated for most stops |
+| Why each stop | which of your favorites drove the pick (Qloo explainability) | the LLM's own words |
 
-"Not in Qloo" doesn't prove a place is invented: Qloo's coverage isn't complete. It means nobody
-can confirm the place, its hours or the walk before you go. The taste-match gap is small
-(e.g. 0.79 vs 0.78 for the indie profile); the large gaps are verifiability, hours and walking.
+The first column is grounded by construction: that is the point. The question is what you get
+without Qloo. "Found in neither" doesn't prove a place is invented (both sources have gaps, e.g.
+Le Bremner, a real restaurant, is in neither); it means nobody can confirm the place, its hours or
+the walk before you go. Matching is strict on purpose (a wrong match would make false claims), so
+some real places are missed. We dropped a taste-match comparison: on the few LLM places Qloo could
+locate, Qloo's affinity was similar to our picks, so it showed nothing.
 
 ## What makes it Qloo-powered
 Every stop on the TasteWalk route comes from Qloo and carries a Qloo entity ID. The LLM can only
@@ -48,7 +58,7 @@ recommend, explain or fact-check.
 | Candidates | `GET /v2/insights` with `filter.type=urn:entity:place`, `signal.interests.entities`, `filter.location=POINT(lon lat)` + radius, `filter.tags` per day slot | places with coordinates, hours, affinity |
 | "Why it fits" | `feature.explainability=true` | share of each favorite in each recommendation |
 | Vibe and category | place tags (ambience, setting, category) | chips, slots, filters |
-| Fact-check | `GET /search` for each LLM-named place, then `GET /v2/insights` with `filter.results.entities` | locate and score another plan's places |
+| Fact-check | `GET /search` for each LLM-named place, then `GET /v2/insights` with `filter.results.entities` | locate and score another plan's places (OpenStreetMap as a second source) |
 
 Verified API notes: [docs/research/01-qloo-api.md](docs/research/01-qloo-api.md).
 
@@ -112,16 +122,21 @@ A GitHub Actions job pings `/healthz` every 10 minutes (set the repo variable `D
 
 ## Honest limitations
 - **Montreal only** for now; the city centre and search radius are configured in code.
-- **Walking distance** is straight-line distance x 1.3, not real street routing.
-- **Opening hours** are checked only when Qloo returns them (all 24 example stops had them).
+- **Walking distance** is an estimate: straight-line distance x 1.3, not street routing.
+- **Opening hours** are checked only when Qloo returns them (23 of the 24 example stops).
 - **Time at each stop** uses simple per-category estimates.
 - **Qloo coverage**: some real places aren't in Qloo, so the fact-checker says "not in Qloo",
   never "doesn't exist". Name matching is strict on purpose and can miss a real match.
-- **Results** are 4 profiles, one run each; the LLM-only plan changes from run to run.
+- **Results** are 4 profiles with one recorded LLM-only plan each; a fresh LLM plan differs
+  from run to run (custom favorites always get a fresh one).
+- **Independent places**: a short list of chains (H&M, Starbucks...) is excluded by design;
+  Qloo's popularity score couldn't separate chains from local favorites.
+- **The LLM-only baseline** is a plain one-shot prompt; it isn't told the weekday, and is
+  checked against today's hours.
 
 ## Repo map
 - `src/tastewalk/` - agents: `taste_agent.py`, `planner.py`, `critic.py`, `baseline.py`,
-  `fact_check.py`; clients: `qloo.py`, `llm.py`; `routing.py`, `loop.py` (orchestration)
+  `fact_check.py`; clients: `qloo.py`, `llm.py`, `osm.py`; `routing.py`, `loop.py` (orchestration)
 - `app/` - FastAPI + SSE server and the single-page UI
 - `docs/` - architecture, research, results, Devpost draft
 - `tests/` - pytest suite (no network; Qloo and the LLM are mocked)

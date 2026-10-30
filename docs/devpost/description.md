@@ -3,7 +3,7 @@
 <!-- Numbers come from docs/results/fact_check_examples.json. Keep claims verifiable. -->
 
 **Elevator pitch (≤200 chars):**
-Tell it what you love; get a walkable day in Montreal built from Qloo's taste graph, then watch Qloo fact-check an AI-only plan: 24/24 of our stops verified vs 4/24 of the AI's.
+Turn what you love into a walkable Montreal day from Qloo's taste graph, then fact-check an AI-only plan: half the places it named couldn't be found in Qloo or OpenStreetMap.
 
 ## Inspiration
 Every "things to do in Montreal" list is the same: the same basilica, the same bagel shops, the
@@ -23,22 +23,23 @@ walkable day in the city:
   times, walking minutes and opening hours checked, on a map and a timeline.
 - **"Why it fits you" cards**: Qloo's explainability says which of *your* favorites drove each
   pick; the LLM only turns those facts into a sentence.
-- **The proof**: the same request goes to an LLM with no Qloo. Then a fact-checker looks up every
-  place the LLM named in Qloo: can it be located, is it open at the planned time, how far apart
-  are the stops, how well does it match your taste. A scorecard puts both plans side by side.
+- **The proof**: the same request goes to an LLM with no Qloo. A fact-checker looks up every
+  place it named in Qloo, then OpenStreetMap: can it be found, is it open at the planned time,
+  how far apart are the stops. A scorecard puts both plans side by side.
 
-Try it: open the live demo and click an example card, e.g. "Indie music & arthouse film".
+Try it: open the live demo and click an example card, e.g. "K-pop & Korean film".
 
-## Results (4 example profiles, one run each, Oct 30)
-| | With Qloo | LLM only |
+## Results (4 example profiles, Oct 30; LLM-only plans recorded so the demo matches)
+| | TasteWalk (Qloo) | LLM only |
 |---|---|---|
-| Stops Qloo can verify (place, coordinates, Qloo ID) | **24 of 24** | **4 of 24** |
-| Opening hours checked at the planned time | 24 of 24 | only for the 4 located |
-| Walking distance | measured: 2.8-4.8 km per day | can't be measured for most stops |
-| Taste match (Qloo affinity, where comparable) | higher in 3 of 3 (0.79/0.81/0.76) | 0.78/0.73/0.62 |
+| Can the place be found? | 24 of 24 Qloo places (by construction) | 4 in Qloo (2 chains, branch unclear) · 8 only on OpenStreetMap · **12 in neither** |
+| Opening hours at the planned time | checked for 23 of 24 | checkable for at most 2 |
+| Walking | estimated for every leg | can't be estimated for most stops |
+| Why each stop | which of your favorites drove it (Qloo explainability) | the LLM's own words |
 
-"Not in Qloo" doesn't prove a place is invented: Qloo's coverage isn't complete, and we say so in
-the app. It means nobody can confirm the place, its hours or the walk before you go.
+"Found in neither" doesn't prove a place is invented (both sources have gaps), and the app says
+so. It means nobody can confirm the place, its hours or the walk before you go. Every LLM-named
+place and its verdict is in the repo (docs/results/fact_check_examples.json).
 
 ## How we built it
 - **Taste agent**: Qloo `GET /search` resolves each favorite to an entity. Qloo `GET /v2/insights`
@@ -46,14 +47,15 @@ the app. It means nobody can confirm the place, its hours or the walk before you
   a radius, `filter.tags` per day slot, `feature.explainability=true`) returns candidate places
   with coordinates, hours, affinity and which favorites drove each one.
 - **Planner agent**: code picks the most walkable cluster; an LLM picks a varied set *by Qloo ID
-  only* (anything else is dropped); code orders the day, schedules times, and swaps out stops
-  that would be closed on arrival.
+  only* (anything else is dropped); code enforces a day's rhythm (one coffee, one meal, drinks
+  last, no chains), orders the walk, schedules times, and swaps out stops closed on arrival.
 - **Critic agent**: explainability shares become "because you love X" chips; the LLM writes a
   short explanation from Qloo facts only; code checks leg length, total walking and hours.
-- **Baseline + fact-checker**: the LLM answers alone; then Qloo `GET /search` locates each named
-  place (strict name matching, so a liquor store inside a market doesn't count as the market),
-  Qloo insights with `filter.results.entities` scores those exact places against the user's
-  favorites, and the same routing code measures the walk.
+- **Baseline + fact-checker** (code, no LLM): the LLM answers alone; then Qloo `GET /search`
+  locates each named place (strict matching: "Atwater Market" is not "Atwater Cocktail Club",
+  chains with several branches are marked unclear), OpenStreetMap is the second source for
+  places Qloo doesn't know, Qloo insights with `filter.results.entities` scores the located ones,
+  and the same routing code checks hours and walking.
 - Python, FastAPI with Server-Sent Events (you watch each agent work), Pydantic-validated JSON
   from the LLM (Groq, `openai/gpt-oss-120b`, through an OpenAI-compatible client), a server-side
   cache for every API call, Leaflet + OpenStreetMap, Docker on Render.
@@ -72,27 +74,39 @@ categories, hours), and insights restricted to specific entities to audit anothe
 - **Explaining "why" honestly**: favorites and places share almost no tag IDs in Qloo (genres vs
   ambience tags), so tag overlap was useless. Qloo's explainability feature turned out to be the
   answer: it reports how much each favorite drove each recommendation.
-- **Fair fact-checking**: Qloo's search is fuzzy ("Phonopolis" returned a Ferris wheel), so a
-  naive match would accuse the LLM of things it didn't do. We match names strictly and say
-  "not in Qloo", never "doesn't exist".
+- **Fair fact-checking**: Qloo's search is fuzzy ("Phonopolis" returned a Ferris wheel), and our
+  own simulated judges caught our first matcher calling "Atwater Market" closed because it
+  matched a cocktail bar. We now match names strictly, mark chains as unclear, and check
+  OpenStreetMap before saying a place can't be found. "Not in Qloo" is never "made up".
+- **Days that make sense**: Qloo categories are fine-grained ("Italian restaurant", "Steak
+  house"), so per-category caps let through two lunches. We group stops into coffee, meal,
+  drinks and other, with quotas and a day order.
 - **Free-tier limits**: one LLM provider's free tier allowed 20 requests a day, which we used up
   in testing. We switched to Groq, retry on rate limits, and fall back to Qloo-only text if the
   LLM is unavailable, so the route always works.
 - **Qloo's data terms**: Qloo responses can't be stored in a public repo, so the server caches
   them privately and warms the example profiles at startup.
 
+## Who it's for
+- **Visitors and locals**: a day that feels picked by a friend who shares your taste.
+- **Destination marketers (e.g. Tourisme Montréal), hotels and concierge apps**: embed it as a
+  "local friend" itinerary that routes visitors past the top-10 list to independent places,
+  each recommendation explainable. The same Qloo insights run in reverse answer "which visitors
+  would love this neighbourhood or business?".
+
 ## Accomplishments we're proud of
-- The scorecard turns "Qloo makes it better" into numbers a judge can check in the app.
+- The scorecard turns "Qloo makes it better" into checks a judge can see in the app.
 - Every recommendation is traceable: Qloo ID, affinity and the favorites that drove it.
-- Each plan streams live: you watch five agents work in sequence.
+- Each plan streams live: you watch three agents, the baseline and the fact-checker work.
 
 ## What we learned
 - A taste graph's real superpower for agents is grounding: the LLM is much more useful choosing
   and explaining among real, scored options than generating them.
 - Explainability matters more than more data: "because you love Amélie" is more convincing
   than any generated paragraph.
-- Measure the comparison. The taste-match gap between plans was smaller than we expected; the
-  big gaps were verifiability, hours and walking, so that's what we lead with.
+- Measure the comparison, and audit your own auditor. The taste-match gap between plans was
+  too small to claim anything, so we dropped it; the real gaps were whether places can be found,
+  their hours and the walk.
 
 ## What's next
 - More cities (only the city centre and radius are city-specific).
@@ -101,4 +115,4 @@ categories, hours), and insights restricted to specific entities to audit anothe
   same insights in reverse.
 
 ## Built with
-python, fastapi, pydantic, qloo, groq, gpt-oss, server-sent-events, leaflet, openstreetmap, docker, render
+python, fastapi, pydantic, qloo, groq, gpt-oss, openstreetmap, nominatim, server-sent-events, leaflet, docker, render

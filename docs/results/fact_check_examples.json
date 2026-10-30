@@ -1,64 +1,168 @@
 {
-  "date": "2026-10-30",
-  "commit": "d369340",
-  "llm_model": "openai/gpt-oss-120b",
-  "note": "Aggregate numbers only; no Qloo response data (Qloo terms).",
-  "rows": [
+ "date": "2026-10-30",
+ "commit": "1133bab",
+ "llm_model": "openai/gpt-oss-120b (Groq)",
+ "note": "LLM-only plans are frozen in src/tastewalk/example_baselines.json. Place names are LLM output; no Qloo response data is stored here (Qloo terms).",
+ "totals": {
+  "stops": 24,
+  "qloo": 4,
+  "chain": 2,
+  "osm_only": 8,
+  "nowhere": 12,
+  "closed": 0
+ },
+ "rows": [
+  {
+   "example": "indie",
+   "tastewalk_stops": 6,
+   "tastewalk_km_estimated": 4.15,
+   "tastewalk_stops_with_hours": 5,
+   "llm_stops": [
     {
-      "example": "indie",
-      "qloo_stops": 6,
-      "qloo_km": 4.2,
-      "qloo_walk_min": 56,
-      "qloo_with_hours": 6,
-      "qloo_affinity": 0.792,
-      "llm_stops": 6,
-      "llm_located": 2,
-      "llm_closed": 0,
-      "llm_km_located": 2.25,
-      "llm_longest_leg_min": 30,
-      "llm_affinity": 0.779
+     "name": "Le Saint-Sulpice",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
     },
     {
-      "example": "design",
-      "qloo_stops": 6,
-      "qloo_km": 2.81,
-      "qloo_walk_min": 37,
-      "qloo_with_hours": 6,
-      "qloo_affinity": 0.807,
-      "llm_stops": 6,
-      "llm_located": 1,
-      "llm_closed": 0,
-      "llm_km_located": 0.0,
-      "llm_longest_leg_min": 0,
-      "llm_affinity": 0.728
+     "name": "Café Olimpico",
+     "verdict": "chain_branch_unclear",
+     "open_at_planned_time": null
     },
     {
-      "example": "kculture",
-      "qloo_stops": 6,
-      "qloo_km": 3.25,
-      "qloo_walk_min": 43,
-      "qloo_with_hours": 6,
-      "qloo_affinity": 0.758,
-      "llm_stops": 6,
-      "llm_located": 1,
-      "llm_closed": 0,
-      "llm_km_located": 0.0,
-      "llm_longest_leg_min": 0,
-      "llm_affinity": 0.615
+     "name": "Phonopolis Vinyl Record Store",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
     },
     {
-      "example": "streetwear",
-      "qloo_stops": 6,
-      "qloo_km": 4.83,
-      "qloo_walk_min": 65,
-      "qloo_with_hours": 6,
-      "qloo_affinity": 0.88,
-      "llm_stops": 6,
-      "llm_located": 0,
-      "llm_closed": 0,
-      "llm_km_located": 0.0,
-      "llm_longest_leg_min": 0,
-      "llm_affinity": null
+     "name": "Le Balcon du Musée des beaux-arts de Montréal",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Parc du Mont-Royal – Belvédère Kondiaronk",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Cinéma du Parc",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": null
     }
-  ]
+   ]
+  },
+  {
+   "example": "design",
+   "tastewalk_stops": 6,
+   "tastewalk_km_estimated": 3.78,
+   "tastewalk_stops_with_hours": 6,
+   "llm_stops": [
+    {
+     "name": "Aesop Boutique – Rue Saint-Paul",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Muji Montréal – Rue Saint‑Denis",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Café Olimpico – Mile End",
+     "verdict": "chain_branch_unclear",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Marché Jean‑Talon",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Le Bremner – Old Port",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Atelier de cuisine – La Guilde Culinaire",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    }
+   ]
+  },
+  {
+   "example": "kculture",
+   "tastewalk_stops": 6,
+   "tastewalk_km_estimated": 3.88,
+   "tastewalk_stops_with_hours": 6,
+   "llm_stops": [
+    {
+     "name": "K-Pop Café K-Box",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Korean Cultural Centre of Montreal",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Miyako Korean BBQ",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Gentle Monster Pop‑up at Rue Saint‑Laurent",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Cinema du Parc – Korean Film Night",
+     "verdict": "located_in_qloo",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Street Art Mural at Rue Saint‑Denis",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    }
+   ]
+  },
+  {
+   "example": "streetwear",
+   "tastewalk_stops": 6,
+   "tastewalk_km_estimated": 2.69,
+   "tastewalk_stops_with_hours": 6,
+   "llm_stops": [
+    {
+     "name": "Le Saint-Sulpice Hip-Hop Lounge",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Le 5e Boutique",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Nike Montreal Flagship",
+     "verdict": "openstreetmap_only",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Street Art Walk on Rue Saint-Laurent",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Cafe Le Petit Boulanger",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    },
+    {
+     "name": "Bar Le Saint-Claude (Atlanta Night)",
+     "verdict": "found_in_neither",
+     "open_at_planned_time": null
+    }
+   ]
+  }
+ ]
 }
