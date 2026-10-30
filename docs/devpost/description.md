@@ -7,7 +7,7 @@ Turn what you love into a walkable Vancouver day from Qloo's taste graph, then f
 
 ## Inspiration
 Every "things to do in Vancouver" list is the same: Granville Island, the Art Gallery, the
-same steam clock. Asked for an indie-music day, an AI alone sent us to Granville Island too. Ask a general-purpose AI and you get that list back, reworded, and studies of AI
+same steam clock. Ask a general-purpose AI and you get that list back, reworded, and studies of AI
 trip plans keep finding places that don't exist, stops scheduled while they're closed, and stops
 far apart. The best days in a new city happen when a friend who *gets* your taste walks you
 around. We wanted to build that friend, and to prove it beats the AI-only answer rather than claim it.
@@ -52,7 +52,8 @@ so. Every LLM-named place, its verdict and its walking legs are in the repo
   a radius, `filter.tags` per day slot, `feature.explainability=true`) returns candidate places
   with coordinates, hours, affinity and which favorites drove each one.
 - **Planner agent**: code picks the most walkable cluster; an LLM picks a varied set *by Qloo ID
-  only* (anything else is dropped); code enforces a day's rhythm (one coffee, one meal, drinks
+  only* (anything else is dropped; the four examples use the code-only planner so their routes
+  stay identical); code enforces a day's rhythm (one coffee, one meal, drinks
   last, no chains), orders the walk, schedules times, and swaps out stops closed on arrival.
 - **Critic agent**: explainability shares become "because you love X" chips; the LLM writes a
   short explanation from Qloo facts only; code checks leg length, total walking and hours.
@@ -63,7 +64,11 @@ so. Every LLM-named place, its verdict and its walking legs are in the repo
   and the same routing code checks hours and walking.
 - Python, FastAPI with Server-Sent Events (you watch each agent work), Pydantic-validated JSON
   from the LLM (Groq, `openai/gpt-oss-120b`, through an OpenAI-compatible client), a server-side
-  cache for every API call, Leaflet + OpenStreetMap, Docker on Render.
+  cache for every API call, Leaflet + OpenStreetMap, the browser's Web Speech API for voice input
+  and read-aloud, Docker on Render.
+- Built solo in two days with Claude Code as the coding agent: I set the direction, made the
+  product and design calls and reviewed the results; the agent wrote much of the code, ran the
+  tests and simulated judge reviews whose findings we fixed.
 
 ## What makes it Qloo-powered
 The LLM never invents a place on our route. Every stop comes from Qloo and carries a Qloo entity
@@ -122,4 +127,4 @@ categories, hours), and insights restricted to specific entities to audit anothe
   same insights in reverse.
 
 ## Built with
-python, fastapi, pydantic, qloo, groq, gpt-oss, openstreetmap, nominatim, server-sent-events, leaflet, docker, render
+python, fastapi, pydantic, qloo, groq, gpt-oss, openstreetmap, nominatim, leaflet, server-sent-events, web-speech-api, javascript, html5, css3, docker, render
