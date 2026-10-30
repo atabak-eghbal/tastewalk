@@ -9,7 +9,6 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY src ./src
 COPY app ./app
-COPY data ./data
 RUN uv sync --frozen --no-dev
 
 RUN useradd --create-home app && chown -R app /srv

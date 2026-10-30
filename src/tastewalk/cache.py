@@ -1,7 +1,7 @@
 """Disk cache keyed by request hash, used for every Qloo and LLM call.
 
-Lookups check the committed seed cache (data/seed_cache/) first, then the runtime cache.
-Writes go to the runtime cache; `scripts/` can promote entries to the seed cache.
+The cache lives on the server only. Qloo's terms forbid storing their response data in a
+public repository, so it is never committed (`.cache/` is gitignored).
 """
 
 from __future__ import annotations

@@ -62,7 +62,7 @@ def dwell_minutes(place: Place) -> int:
     return DEFAULT_DWELL
 
 
-def _path_km(path: list[Place]) -> float:
+def path_km(path: list[Place]) -> float:
     return sum(walk_km(a, b) for a, b in itertools.pairwise(path))
 
 
@@ -79,10 +79,25 @@ def order_stops(places: list[Place]) -> list[Place]:
             rest.remove(nxt)
             path.append(nxt)
         path = _two_opt(path)
-        if best is None or _path_km(path) < _path_km(best):
+        if best is None or path_km(path) < path_km(best):
             best = path
     assert best is not None
     return best
+
+
+def order_day(places: list[Place], first: Place | None, last: Place | None) -> list[Place]:
+    """Pin an opening and a closing stop (e.g. coffee, drinks); shortest path in between."""
+    middle = [p for p in places if p is not first and p is not last]
+    head, tail = ([first] if first else []), ([last] if last else [])
+    if len(middle) <= 7:  # exact: at most 5040 permutations
+        best = min(
+            (list(perm) for perm in itertools.permutations(middle)),
+            key=lambda m: path_km(head + m + tail),
+            default=[],
+        )
+    else:
+        best = _two_opt(order_stops(middle))
+    return head + best + tail
 
 
 def _two_opt(path: list[Place]) -> list[Place]:
@@ -92,12 +107,12 @@ def _two_opt(path: list[Place]) -> list[Place]:
         for i in range(1, len(path) - 1):
             for j in range(i + 1, len(path)):
                 cand = path[:i] + path[i : j + 1][::-1] + path[j + 1 :]
-                if _path_km(cand) < _path_km(path) - 1e-9:
+                if path_km(cand) < path_km(path) - 1e-9:
                     path, improved = cand, True
     return path
 
 
-def _is_open(place: Place, day: int, arrive: time, leave: time) -> bool | None:
+def is_open(place: Place, day: int, arrive: time, leave: time) -> bool | None:
     """True/False if Qloo gave hours, None if unknown."""
     if place.hours is None:
         return None
@@ -127,7 +142,7 @@ def schedule(
         arrive = clock.time()
         clock += timedelta(minutes=dwell_minutes(place))
         leave = clock.time()
-        if _is_open(place, day.weekday(), arrive, leave) is False:
+        if is_open(place, day.weekday(), arrive, leave) is False:
             issues.append(f"{place.name} may be closed at {arrive:%H:%M}")
         stops.append(Stop(place=place, arrive=arrive, leave=leave, walk_minutes_from_prev=walk))
         if clock.date() != day:

@@ -143,3 +143,9 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accen
   .fav { grid-template-columns: 1fr 7rem 2.5rem; }
   .card, .col { padding: 16px; }
 }
+
+/* Stop card: text + photo from Qloo */
+.stop-head { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+.thumb { width: 84px; height: 84px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+.desc { margin: 4px 0 0; font-size: .9rem; }
+.stop-body .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }

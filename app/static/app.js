@@ -164,16 +164,24 @@ function renderTimeline(stops) {
   $("#timeline").innerHTML = stops.map((s, i) => {
     const p = s.place;
     const leg = i ? `<li class="leg">${s.walk_minutes_from_prev} min walk</li>` : "";
-    const tags = s.matched_tags.map((t) => `<span class="chip">${esc(t)}</span>`).join(" ");
+    const because = s.because_of.map((t) => `<span class="chip">♥ ${esc(t)}</span>`).join(" ");
+    const vibe = (p.vibe || []).slice(0, 4).map((t) => `<span class="chip grey">${esc(t)}</span>`).join(" ");
     const aff = p.affinity != null ? ` · affinity ${p.affinity.toFixed(2)}` : "";
+    const where = [p.neighborhood, p.address].filter(Boolean).map(esc).join(" · ");
     return `${leg}<li class="stop">
       <span class="num">${i + 1}</span>
       <div class="stop-body">
         <div class="stop-meta">${hhmm(s.arrive)}–${hhmm(s.leave)} · ${esc(p.category || "Place")}${aff}</div>
-        <h3>${esc(p.name)}</h3>
-        ${p.address ? `<div class="stop-meta">${esc(p.address)}</div>` : ""}
+        <div class="stop-head">
+          <div>
+            <h3>${esc(p.name)}</h3>
+            ${where ? `<div class="stop-meta">${where}</div>` : ""}
+            ${p.description ? `<p class="desc">${esc(p.description)}</p>` : ""}
+          </div>
+          ${p.image_url ? `<img class="thumb" src="${esc(p.image_url)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
+        </div>
         ${s.why_it_fits ? `<div class="why"><b>Why it fits you</b>${esc(s.why_it_fits)}</div>` : ""}
-        ${tags ? `<div>${tags}</div>` : ""}
+        ${because || vibe ? `<div class="chips">${because} ${vibe}</div>` : ""}
         <div class="qid">Qloo ID ${esc(p.qloo_id)}</div>
       </div></li>`;
   }).join("");

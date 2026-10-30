@@ -45,8 +45,9 @@ def test_pipeline_without_llm(qloo):
     assert "FAR" not in ids  # filtered by distance
     assert all(s.place.qloo_id.startswith("P") for s in stops)  # only Qloo candidates
     cats = [s.place.category for s in stops]
-    assert cats.count("Coffee Shop") <= 2  # variety cap
-    assert all("Indie" in s.matched_tags and s.why_it_fits for s in stops)
+    assert cats.count("Cafe") <= 2  # variety cap
+    assert all(s.because_of and s.why_it_fits for s in stops)
+    assert len({s.place.slot for s in stops}) >= 3  # varied day: several slots
 
 
 def test_no_matches_is_an_error(qloo):
@@ -73,7 +74,7 @@ def test_qloo_responses_are_cached(tmp_path):
 def test_parse_place_requires_id_and_coords():
     assert parse_place({"entity_id": "x", "name": "no coords"}) is None
     p = parse_place(_place_json(*FAKE_PLACES[0]))
-    assert p.category == "Coffee Shop" and p.affinity == 0.95
+    assert p.category == "Cafe" and p.affinity == 0.95
     assert p.hours[0] == [(time(8, 0), time(23, 0))]
 
 
@@ -105,4 +106,14 @@ def test_schedule_times_and_closed_check():
 def test_critic_template_without_llm(qloo):
     events = list(run(user("Radiohead"), qloo, llm=None, with_baseline=False))
     itin = critique(events[-1].data.qloo_itinerary, events[-1].data.profile, None)
-    assert "Indie" in itin.stops[0].why_it_fits
+    assert "Radiohead" in itin.stops[0].why_it_fits
+
+
+def test_day_order_pins_coffee_and_drinks_when_cheap():
+    from tastewalk.planner import order_by_day
+
+    cafe = _p("cafe", 45.520, -73.580)
+    shop = _p("shop", 45.521, -73.580)
+    bar = _p("bar", 45.522, -73.580)
+    cafe.slot, shop.slot, bar.slot = "coffee", "shopping", "drinks"
+    assert [p.qloo_id for p in order_by_day([bar, shop, cafe])] == ["cafe", "shop", "bar"]

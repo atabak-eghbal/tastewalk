@@ -66,6 +66,13 @@ class Place(BaseModel):
     affinity: float | None = None
     # Weekday (0=Mon) -> list of (open, close) spans. None means Qloo gave no hours.
     hours: dict[int, list[tuple[time, time]]] | None = None
+    slot: str | None = None  # day-plan bucket this came from: coffee, culture, shopping...
+    neighborhood: str | None = None
+    description: str | None = None
+    image_url: str | None = None
+    vibe: list[str] = []  # Qloo ambience / interest / setting tags
+    # Qloo explainability: favorite entity ID -> share of this recommendation.
+    signal_scores: dict[str, float] = {}
 
 
 class Stop(BaseModel):
@@ -74,7 +81,7 @@ class Stop(BaseModel):
     leave: time
     walk_minutes_from_prev: int = 0
     why_it_fits: str = ""
-    matched_tags: list[str] = []
+    because_of: list[str] = []  # favorites that drove this pick, strongest first
 
 
 class RouteCheck(BaseModel):

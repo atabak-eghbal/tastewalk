@@ -29,7 +29,7 @@ class Event:
 
 
 def make_clients(settings: Settings, offline: bool = False) -> tuple[QlooClient, LLM | None]:
-    cache = DiskCache(settings.cache_dir, settings.seed_cache_dir)
+    cache = DiskCache(settings.cache_dir)
     qloo = QlooClient(
         settings.qloo_api_key,
         settings.qloo_base_url,

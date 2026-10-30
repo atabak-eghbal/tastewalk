@@ -17,7 +17,7 @@
 ## Block 3 - Product (5h)
 - [x] FastAPI + SSE streaming of agent steps
 - [x] UI: input form, map, timeline, why cards, side-by-side toggle
-- [x] 4 curated example profiles (`src/tastewalk/examples.py`) - [ ] check they resolve in Qloo; build seed cache committed to `data/seed_cache/`
+- [x] 4 curated example profiles (`src/tastewalk/examples.py`), all resolve in Qloo; prewarmed at app startup (no committed Qloo data)
 
 ## Block 4 - Deploy (2-3h)
 - [x] Dockerfile + render.yaml + /healthz (image tested locally)

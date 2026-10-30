@@ -43,8 +43,9 @@ itinerary so Qloo's value is visible. First city: Montreal.
 - Route feasibility (distance, total walking time, and opening hours *when Qloo provides them*) is computed in code,
   not trusted to the LLM.
 - Cache every Qloo response on disk by request hash.
-- Demo must have 3-4 curated example profiles that reliably work. Their Qloo + LLM responses are committed
-  as a seed cache (`data/seed_cache/`) so the demo survives ephemeral hosting and API outages.
+- Demo must have 3-4 curated example profiles that reliably work. The app prewarms them at startup into
+  its server-side cache. Qloo responses are NEVER committed: Qloo's hackathon terms forbid storing their
+  data in a public repository.
 - Walking distance defaults to haversine x detour factor; OSRM is optional (the public demo server is car-only
   and not for production traffic).
 

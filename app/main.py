@@ -7,7 +7,9 @@ UI dev without a Qloo key:  TASTEWALK_FAKE_QLOO=1 uv run uvicorn app.main:app --
 from __future__ import annotations
 
 import json
+import logging
 import os
+import threading
 import time
 from collections import defaultdict, deque
 from pathlib import Path
@@ -27,6 +29,7 @@ from tastewalk.loop import make_clients, run
 from tastewalk.schemas import FavoriteType, UserInput
 
 STATIC = Path(__file__).parent / "static"
+log = logging.getLogger("tastewalk.app")
 RATE_LIMIT = 8  # plans per IP per minute (protects Qloo/LLM quotas on the public demo)
 
 
@@ -48,6 +51,17 @@ def create_app(fake: bool | None = None) -> FastAPI:
     if not settings.has_llm:
         llm = None
     hits: dict[str, deque[float]] = defaultdict(deque)
+
+    def prewarm() -> None:
+        """Run every example once at boot so judges get instant, cached results."""
+        for ex_id, ex in EXAMPLES.items():
+            last = None
+            for last in run(ex["input"], qloo, llm):
+                pass
+            log.warning("prewarm %s: %s", ex_id, last.step if last else "no events")
+
+    if not fake and settings.has_qloo and os.getenv("TASTEWALK_PREWARM", "1") == "1":
+        threading.Thread(target=prewarm, daemon=True, name="prewarm").start()
 
     app = FastAPI(title="TasteWalk", docs_url=None, redoc_url=None)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")

@@ -71,8 +71,9 @@ The repo ships a `Dockerfile` (any container host) and a `render.yaml` blueprint
 2. Enter `QLOO_API_KEY`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` in the dashboard.
 3. Open `/healthz`, then `/?example=indie` in a private window.
 
-The curated examples are served from a committed seed cache (`data/seed_cache/`, built with
-`scripts/build_seed_cache.py`), so they work even if the host wipes its disk or an API is slow.
+On startup the app runs the curated examples once to fill its server-side cache, so they load
+instantly for visitors. Qloo responses are cached on the server only and never committed, per
+Qloo's hackathon terms.
 
 ## Honest limitations
 - **Montreal only** for now; the city centre and search radius are configured in code.

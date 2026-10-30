@@ -21,7 +21,6 @@ class Settings:
     routing_base_url: str
     max_stops: int
     cache_dir: Path
-    seed_cache_dir: Path
 
     @property
     def has_qloo(self) -> bool:
@@ -46,5 +45,4 @@ def load_settings() -> Settings:
         routing_base_url=os.getenv("ROUTING_BASE_URL", ""),
         max_stops=int(os.getenv("MAX_STOPS", "6")),
         cache_dir=cache_dir,
-        seed_cache_dir=REPO_ROOT / "data" / "seed_cache",
     )

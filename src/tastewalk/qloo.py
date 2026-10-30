@@ -1,8 +1,12 @@
 """Qloo API client: entity search, place insights, response parsing, disk caching.
 
-Status: endpoint paths, parameter names and response fields below are UNVERIFIED guesses
-based on hackathon forum posts. They are kept in this one file (see QLOO_* constants and the
-`_parse_*` helpers) so they can be fixed after running scripts/smoke_test_qloo.py.
+Verified against the hackathon API on 2026-10-30 (see docs/research/01-qloo-api.md):
+- GET /search?query=&types=urn:entity:artist -> {"results": [entity, ...]}
+- GET /v2/insights?filter.type=urn:entity:place&signal.interests.entities=...
+  &filter.location=POINT(lon lat)&filter.location.radius=m&filter.tags=...
+  &feature.explainability=true -> {"results": {"entities": [...]}}
+- Places carry location.lat/lon, query.affinity, query.explainability (per-signal scores),
+  properties.hours / short_description / neighborhood / image, and typed tags.
 """
 
 from __future__ import annotations
@@ -19,7 +23,7 @@ from .schemas import Place, ResolvedEntity, Tag
 
 log = logging.getLogger(__name__)
 
-# --- To verify against the docs / smoke test --------------------------------------------
+# --- Endpoints (verified) ------------------------------------------------------------------
 QLOO_SEARCH_PATH = "/search"
 QLOO_SEARCH_TYPE_PARAM = "types"
 QLOO_INSIGHTS_PATH = "/v2/insights"
@@ -29,7 +33,7 @@ PLACE_TYPE = "urn:entity:place"
 CITY_CENTERS: dict[str, tuple[float, float]] = {
     "montreal": (45.5048, -73.5772),  # around Plateau / downtown
 }
-DEFAULT_RADIUS_M = 6000
+DEFAULT_RADIUS_M = 4000
 
 _WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
@@ -83,11 +87,12 @@ class QlooClient:
         entity_ids: list[str],
         city: str,
         take: int = 40,
-        tag_ids: list[str] | None = None,
+        category_tags: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {
             "filter.type": PLACE_TYPE,
             "signal.interests.entities": ",".join(entity_ids),
+            "feature.explainability": "true",
             "take": take,
         }
         center = CITY_CENTERS.get(city.lower())
@@ -97,8 +102,8 @@ class QlooClient:
             params["filter.location.radius"] = DEFAULT_RADIUS_M
         else:
             params["filter.location.query"] = city
-        if tag_ids:
-            params["signal.interests.tags"] = ",".join(tag_ids)
+        if category_tags:
+            params["filter.tags"] = ",".join(category_tags)
         return _results_list(self._get(QLOO_INSIGHTS_PATH, params))
 
     # --- typed helpers -----------------------------------------------------------------
@@ -118,10 +123,17 @@ class QlooClient:
             tags=_parse_tags(best),
         )
 
-    def places_for(self, entity_ids: list[str], city: str, take: int = 40) -> list[Place]:
+    def places_for(
+        self,
+        entity_ids: list[str],
+        city: str,
+        take: int = 40,
+        category_tags: list[str] | None = None,
+        slot: str | None = None,
+    ) -> list[Place]:
         places = []
-        for raw in self.place_insights(entity_ids, city, take=take):
-            place = parse_place(raw)
+        for raw in self.place_insights(entity_ids, city, take=take, category_tags=category_tags):
+            place = parse_place(raw, slot=slot)
             if place is not None:
                 places.append(place)
         return places
@@ -151,7 +163,7 @@ def _parse_tags(raw: dict[str, Any]) -> list[Tag]:
 
 def _category(raw: dict[str, Any], tags: list[Tag]) -> str | None:
     for t in tags:
-        if t.type and "category" in t.type:
+        if t.type == "urn:tag:category:place":
             return t.name
     sub = raw.get("subtype")
     return sub.rsplit(":", 1)[-1].replace("_", " ") if isinstance(sub, str) else None
@@ -166,7 +178,10 @@ def _parse_time(s: str) -> time | None:
 
 
 def _parse_hours(raw_hours: Any) -> dict[int, list[tuple[time, time]]] | None:
-    """Parse {"Monday": [{"opens": "T09:00", "closes": "T17:00"}], ...}. None if unknown."""
+    """Parse {"monday": [{"opens": "T11:00:00", "closes": "T18:00:00", "closed": false}]}.
+
+    A day listed only with closed spans maps to []; None means Qloo gave no hours at all.
+    """
     if not isinstance(raw_hours, dict):
         return None
     out: dict[int, list[tuple[time, time]]] = {}
@@ -176,7 +191,7 @@ def _parse_hours(raw_hours: Any) -> dict[int, list[tuple[time, time]]] | None:
         idx = _WEEKDAYS.index(str(day).lower())
         out[idx] = []
         for span in spans:
-            if not isinstance(span, dict):
+            if not isinstance(span, dict) or span.get("closed"):
                 continue
             o, c = _parse_time(span.get("opens", "")), _parse_time(span.get("closes", ""))
             if o and c:
@@ -184,16 +199,34 @@ def _parse_hours(raw_hours: Any) -> dict[int, list[tuple[time, time]]] | None:
     return out or None
 
 
-def parse_place(raw: dict[str, Any]) -> Place | None:
+# Place tag types worth showing as "vibe" chips (the rest are amenities, payments, etc.).
+VIBE_TAG_TYPES = (
+    "urn:tag:ambience:qloo",
+    "urn:tag:interests:qloo",
+    "urn:tag:setting:qloo",
+    "urn:tag:decor:qloo",
+)
+
+
+def parse_place(raw: dict[str, Any], slot: str | None = None) -> Place | None:
     qid = raw.get("entity_id") or raw.get("id")
     loc = raw.get("location") or {}
     props = raw.get("properties") or {}
+    if props.get("is_closed"):
+        return None
     lat, lon = loc.get("lat") or loc.get("latitude"), loc.get("lon") or loc.get("longitude")
     if not qid or lat is None or lon is None:
         log.debug("skipping place without id/coords: %s", raw.get("name"))
         return None
     tags = _parse_tags(raw)
-    affinity = (raw.get("query") or {}).get("affinity")
+    query = raw.get("query") or {}
+    affinity = query.get("affinity")
+    signals = {
+        s["entity_id"]: float(s["score"])
+        for s in (query.get("explainability") or {}).get("signal.interests.entities", [])
+        if isinstance(s, dict) and s.get("entity_id") and s.get("score") is not None
+    }
+    image = props.get("image")
     return Place(
         qloo_id=qid,
         name=raw.get("name", "?"),
@@ -204,4 +237,10 @@ def parse_place(raw: dict[str, Any]) -> Place | None:
         tags=tags,
         affinity=float(affinity) if affinity is not None else None,
         hours=_parse_hours(props.get("hours")),
+        slot=slot,
+        neighborhood=props.get("neighborhood"),
+        description=props.get("short_description") or props.get("description"),
+        image_url=image.get("url") if isinstance(image, dict) else None,
+        vibe=[t.name for t in tags if t.type in VIBE_TAG_TYPES][:6],
+        signal_scores=signals,
     )

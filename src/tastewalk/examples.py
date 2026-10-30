@@ -40,16 +40,16 @@ EXAMPLES: dict[str, dict] = {
             start_time=time(10, 0),
         ),
     },
-    "jazz": {
-        "label": "Jazz & literary fiction",
+    "kculture": {
+        "label": "K-pop & Korean film",
         "input": UserInput(
             favorites=[
-                _fav("Miles Davis", "artist"),
-                _fav("Nina Simone", "artist"),
-                _fav("Norwegian Wood", "book"),
-                _fav("The Secret History", "book"),
+                _fav("BTS", "artist"),
+                _fav("Parasite", "movie"),
+                _fav("Squid Game", "tv_show"),
+                _fav("Gentle Monster", "brand"),
             ],
-            start_time=time(13, 0),
+            start_time=time(12, 0),
         ),
     },
     "streetwear": {

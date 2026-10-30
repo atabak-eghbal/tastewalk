@@ -36,8 +36,6 @@ src/tastewalk/
 app/
   main.py        # FastAPI + SSE
   static/        # single-page UI (map + timeline)
-data/
-  seed_cache/    # committed cache for the curated demo profiles
 scripts/
   smoke_test_qloo.py
 docs/devpost/
