@@ -6,7 +6,7 @@
 
 Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph finds the places in your city (anywhere in the world) that people with your taste love, agents plan a real walking day and explain every stop with the favorites that drove it, and a fact-checker shows what an AI alone would have told you instead.
 
-**[Live demo](https://tastewalk-fy6u.onrender.com/?example=indie)** · **[Demo video](https://youtu.be/dv12J566UVQ)** · **[The proof](#the-proof)** · **[How it works](#how-it-works)**
+**[Live demo](https://tastewalk-fy6u.onrender.com/?example=indie)** · **[Demo video](https://youtu.be/Rljf8arlYf0)** · **[The proof](#the-proof)** · **[How it works](#how-it-works)**
 
 [![Qloo Agentic Hackathon](https://img.shields.io/badge/hackathon-Qloo%20Agentic-d9480f)](#)
 [![Qloo taste graph](https://img.shields.io/badge/taste%20graph-Qloo%20Insights-1d1a17)](#what-makes-it-qloo-powered)
@@ -14,7 +14,7 @@ Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph 
 [![OpenStreetMap](https://img.shields.io/badge/second%20source-OpenStreetMap-7ebc6f)](#the-proof)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-<a href="https://youtu.be/dv12J566UVQ"><img src="https://img.youtube.com/vi/dv12J566UVQ/maxresdefault.jpg" alt="Watch the TasteWalk demo video (1:51)" width="720"></a>
+<a href="https://youtu.be/Rljf8arlYf0"><img src="https://img.youtube.com/vi/Rljf8arlYf0/maxresdefault.jpg" alt="Watch the TasteWalk demo video (2:00)" width="720"></a>
 
 <sub>Watch the 2-minute demo · Built for the Qloo Agentic Hackathon 2026 · Any city; examples in Vancouver · The demo runs on a free plan: if it was asleep, the first load can take about a minute.</sub>
 
@@ -31,7 +31,7 @@ Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph 
 
 ![TasteWalk results: the proof headline, the walking route on a map, and why-it-fits cards next to the fact-checked LLM-only plan](docs/img/hero.jpg)
 
-<a id="demo-video"></a>**Demo video (1:51):** [youtu.be/dv12J566UVQ](https://youtu.be/dv12J566UVQ)
+<a id="demo-video"></a>**Demo video (2:00):** [youtu.be/Rljf8arlYf0](https://youtu.be/Rljf8arlYf0)
 
 ## What it does
 **Say, type or tap what you love:** speak a sentence ("I love Radiohead, Ghibli films and
