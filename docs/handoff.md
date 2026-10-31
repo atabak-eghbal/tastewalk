@@ -50,8 +50,7 @@ docs/architecture.md and README.md.
 ## Remaining work, in order
 1. **Video: final is v5** (`~/Desktop/tastewalk_video/tastewalk_demo_v5.mp4` + `.srt`, 1:51,
    thumbnails `*_v4.png`). Verified: no camera motion, live numbers, no Montreal/K-pop/Granville
-   claims. Pipeline: `~/Projects/tastewalk-video-tools/v5/`. Atabak uploads it to YouTube; then add
-   the YouTube thumbnail link to the README "Demo video" line.
+   claims. Pipeline: `~/Projects/tastewalk-video-tools/v5/`. Uploaded: https://youtu.be/dv12J566UVQ (linked in the README).
 2. **Atabak:** make the GitHub repo public; About: website = demo URL, topics, MIT license visible.
    Then check the public repo page renders (README images, links) in a logged-out browser.
 3. **Atabak:** keep-awake ping on cron-job.org every 5 min to `/healthz` (GitHub cron is throttled).
