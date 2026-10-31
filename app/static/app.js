@@ -48,6 +48,7 @@ async function init() {
       <span class="ex-icon" aria-hidden="true">${EXAMPLE_ICONS[e.id] || "✨"}</span>
       <span class="ex-label">${esc(e.label)}</span>
       <span class="ex-favs">${e.input.favorites.map((f) => esc(f.name)).join(" · ")}</span>
+      <span class="ex-city">📍 ${esc(e.input.city)}</span>
     </button>`).join("");
   $("#examples").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-ex]");

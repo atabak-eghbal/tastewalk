@@ -294,3 +294,5 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accen
   .pal-group .pal-h { position: sticky; left: 0; width: auto; padding-right: 6px; background: var(--bg); }
   .pal-chip { white-space: nowrap; }
 }
+
+.ex-city { font-size: .75rem; color: #ffb38a; margin-top: 2px; }
