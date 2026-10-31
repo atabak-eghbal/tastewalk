@@ -15,7 +15,7 @@ import difflib
 import logging
 import re
 import unicodedata
-from datetime import date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from time import sleep
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -42,9 +42,15 @@ DEFAULT_RADIUS_M = 4000
 CITY_TZ = {"vancouver": "America/Vancouver", "montreal": "America/Toronto"}
 
 
+CITY_UTC_OFFSET: dict[str, int] = {}  # geocoded cities: hours from UTC, estimated from longitude
+
+
 def city_today(city: str) -> date:
     """Today in the city (opening hours are local; the server runs in UTC)."""
-    return datetime.now(ZoneInfo(CITY_TZ.get(city.lower(), "UTC"))).date()
+    key = city.strip().lower()
+    if key in CITY_TZ:
+        return datetime.now(ZoneInfo(CITY_TZ[key])).date()
+    return (datetime.now(UTC) + timedelta(hours=CITY_UTC_OFFSET.get(key, 0))).date()
 
 
 _WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]

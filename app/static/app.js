@@ -42,7 +42,7 @@ async function init() {
   if (META.fake_data) showBanner("Demo data: Qloo is mocked with fictional places (TASTEWALK_FAKE_QLOO=1).");
   else if (!META.has_qloo) showBanner("Qloo key not configured: only cached example profiles will work.");
 
-  $("#city").innerHTML = META.cities.map((c) => `<option>${esc(c)}</option>`).join("");
+  $("#city-list").innerHTML = META.cities.map((c) => `<option value="${esc(c)}">`).join("");
   $("#examples").innerHTML = META.examples.map((e) => `
     <button type="button" class="ex-card" data-ex="${esc(e.id)}">
       <span class="ex-icon" aria-hidden="true">${EXAMPLE_ICONS[e.id] || "✨"}</span>
@@ -96,6 +96,7 @@ function loadExample(input, run) {
   $("#add-fav").hidden = false;
   input.favorites.forEach((f) => addFav(f.name, f.type));
   $("#start").value = hhmm(input.start_time);
+  $("#city").value = input.city;
   $("#stops").value = input.max_stops;
   document.querySelectorAll(".ex-card").forEach((c) =>
     c.classList.toggle("active", META.examples.find((e) => e.id === c.dataset.ex)?.input === input && run));
@@ -215,7 +216,7 @@ function readInput() {
     .map((r) => ({ name: $(".fav-name", r).value.trim(), type: $(".fav-type", r).value }))
     .filter((f) => f.name);
   return {
-    city: $("#city").value,
+    city: $("#city").value.trim() || "Vancouver",
     favorites,
     start_time: $("#start").value || "10:00",
     max_stops: Math.min(8, Math.max(2, +$("#stops").value || 6)),

@@ -10,7 +10,8 @@ Atabak does the submitting, account actions and making the repo public; Claude p
 - Demo: https://tastewalk-fy6u.onrender.com (Render free plan, Docker, auto-deploys on push to `main`).
 - Render env vars (set in the Render dashboard, not from `.env`): `QLOO_API_KEY`, `LLM_API_KEY` (Groq,
   starts `gsk_`), `LLM_BASE_URL=https://api.groq.com/openai/v1`, `LLM_MODEL=openai/gpt-oss-120b`.
-- City: **Vancouver** (changed from Montreal on Oct 30 per Atabak). Montreal is still configured in code.
+- City: **any city** (geocoded via OpenStreetMap in `geo.py`); examples are in **Vancouver**.
+  Tested: Vancouver, Montreal, Seoul, Paris.
 - 4 examples: `indie`, `design`, `anime`, `streetwear` (`/?example=indie` etc.). All verified live:
   each finishes in ~2 s once the startup prewarm has run (~2 min after a deploy/restart).
 

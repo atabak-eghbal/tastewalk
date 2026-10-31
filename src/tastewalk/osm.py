@@ -38,12 +38,29 @@ class OSMClient:
             headers={"User-Agent": USER_AGENT}, timeout=4, transport=transport
         )
 
+    def geocode(self, city: str) -> dict[str, Any] | None:
+        """The best city/town match for a name, or None."""
+        params = {"q": city, "format": "jsonv2", "limit": 5, "accept-language": "en"}
+        for r in self._get(request_key("osm-city", params), params) or []:
+            if r.get("category", r.get("class")) in ("place", "boundary") and r.get("boundingbox"):
+                return r
+        return None
+
     def search(self, query: str, city: str) -> list[dict[str, Any]] | None:
-        params: dict[str, Any] = {"q": f"{query}, {city}", "format": "jsonv2", "limit": 5}
+        # English names: in Seoul or Tokyo the default is the local script, which would never
+        # match the English names an LLM writes (a false "not found").
+        params: dict[str, Any] = {
+            "q": f"{query}, {city}",
+            "format": "jsonv2",
+            "limit": 5,
+            "accept-language": "en",
+        }
         box = CITY_VIEWBOX.get(city.lower())
         if box:
             params |= {"viewbox": box, "bounded": 1}
-        key = request_key("osm", params)
+        return self._get(request_key("osm", params), params)
+
+    def _get(self, key: str, params: dict[str, Any]) -> list[dict[str, Any]] | None:
         cached = self.cache.get(key)
         if cached is not None:
             return cached

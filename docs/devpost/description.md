@@ -14,7 +14,7 @@ around. We wanted to build that friend, and to prove it beats the AI-only answer
 
 ## What it does
 TasteWalk turns the things you already love (artists, films, shows, books, brands) into a
-walkable day in Vancouver:
+walkable day in any city (type Seoul, Paris, Tokyo...; the examples are in Vancouver):
 
 - **Say, type or tap what you love**: speak a sentence, type it, or tap from 39 favorites
   across music, film, TV, books, games, brands and podcasts. The LLM only extracts what you name.
@@ -121,7 +121,7 @@ categories, hours), and insights restricted to specific entities to audit anothe
   their hours and the walk.
 
 ## What's next
-- More cities (only the city centre and radius are city-specific).
+- Smarter routes in sprawling cities, where taste matches are spread across districts.
 - Real street routing instead of straight-line distance x 1.3.
 - For tourism boards and local businesses: "which visitors would love this place?", using the
   same insights in reverse.

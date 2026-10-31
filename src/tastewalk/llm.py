@@ -6,7 +6,7 @@ import json
 import logging
 from typing import TypeVar
 
-from openai import OpenAI, OpenAIError, RateLimitError
+from openai import BadRequestError, OpenAI, OpenAIError, RateLimitError
 from pydantic import BaseModel, ValidationError
 
 from .cache import DiskCache, request_key
@@ -42,7 +42,7 @@ class LLM:
             temperature=0,  # stable picks: the live demo must match the docs
         )
 
-    def json(self, system: str, user: str, schema: type[T], retries: int = 1) -> T:
+    def json(self, system: str, user: str, schema: type[T], retries: int = 2) -> T:
         """Ask for JSON matching `schema`; validate it; retry once with the error on failure."""
         schema_json = json.dumps(schema.model_json_schema())
         sys_prompt = (
@@ -69,6 +69,11 @@ class LLM:
                     resp = self._create(self.fallback_model, messages)
                 except OpenAIError as e2:
                     raise LLMError(f"LLM call failed: {type(e2).__name__}: {e2}") from e2
+            except BadRequestError as e:
+                if "validate JSON" not in str(e):  # Groq rejects malformed JSON: just try again
+                    raise LLMError(f"LLM call failed: {type(e).__name__}: {e}") from e
+                last_err = e
+                continue
             except OpenAIError as e:  # rate limit, timeout, outage: callers fall back
                 raise LLMError(f"LLM call failed: {type(e).__name__}: {e}") from e
             text = resp.choices[0].message.content or ""

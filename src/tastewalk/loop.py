@@ -16,6 +16,7 @@ from .config import Settings, load_settings
 from .critic import critique
 from .examples import FROZEN_OSM, frozen_baseline
 from .fact_check import fact_check
+from .geo import ensure_city
 from .llm import LLM, LLMError
 from .osm import OSMClient
 from .planner import plan
@@ -60,6 +61,10 @@ def run(
     if qloo is None:
         qloo, llm = make_clients(load_settings())
     try:
+        city_error = ensure_city(user.city, osm)
+        if city_error:
+            yield Event("error", city_error)
+            return
         profile = build_profile(qloo, user)
         if not profile.entities:
             missing = ", ".join(profile.unresolved)

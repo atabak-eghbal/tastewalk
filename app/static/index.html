@@ -18,7 +18,7 @@
   <div class="wrap">
     <a class="brand" href="/">Taste<span>Walk</span></a>
     <h1>Your taste, turned into a day you can&nbsp;walk.</h1>
-    <p class="lede">Say what you love. Qloo's taste graph finds the places in Vancouver that people with your taste love, our agents plan a real walking day and explain every stop, and a fact-checker shows what an AI alone would have told you.</p>
+    <p class="lede">Say what you love. Qloo's taste graph finds the places in your city that people with your taste love, our agents plan a real walking day and explain every stop, and a fact-checker shows what an AI alone would have told you.</p>
     <span class="kicker hero-k">Try an example day</span>
     <div class="examples" id="examples" aria-label="Example days"></div>
   </div>
@@ -45,8 +45,9 @@
       <div id="favs" class="favs"></div>
       <button type="button" class="link-btn" id="add-fav">+ Add a favorite</button>
       <div class="row opts">
-        <label>City
-          <select id="city"></select>
+        <label>City (any city)
+          <input id="city" list="city-list" value="Vancouver" maxlength="80" required autocomplete="off">
+          <datalist id="city-list"></datalist>
         </label>
         <label>Start
           <input type="time" id="start" value="10:00" required>

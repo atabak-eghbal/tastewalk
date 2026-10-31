@@ -33,6 +33,27 @@ from tastewalk.schemas import FavoriteType, UserInput
 
 STATIC = Path(__file__).parent / "static"
 log = logging.getLogger("tastewalk.app")
+# Any city works (geocoded); these are just suggestions in the city box.
+CITY_SUGGESTIONS = [
+    "Vancouver",
+    "Seoul",
+    "Tokyo",
+    "New York",
+    "London",
+    "Paris",
+    "Berlin",
+    "Mexico City",
+    "Toronto",
+    "Montreal",
+    "Barcelona",
+    "Lisbon",
+    "Sydney",
+    "Melbourne",
+    "Amsterdam",
+    "Copenhagen",
+    "Chicago",
+    "San Francisco",
+]
 RATE_LIMIT = 20  # custom plans per IP per minute (examples are cached and don't count)
 PREWARM_GAP_S = 60  # each example's planner + critic ~4-6k LLM tokens; Groq free: 8k/min
 
@@ -90,7 +111,7 @@ def create_app(fake: bool | None = None) -> FastAPI:
             "fake_data": fake,
             "has_qloo": fake or settings.has_qloo,
             "has_llm": llm is not None,
-            "cities": ["Vancouver"],
+            "cities": CITY_SUGGESTIONS,
             "types": [{"value": t.value, "label": t.name.replace("_", " ")} for t in FavoriteType],
             "examples": [
                 {"id": k, "label": v["label"], "input": v["input"].model_dump(mode="json")}

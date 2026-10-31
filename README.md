@@ -4,7 +4,7 @@
 
 ### Tell it what you love. Get a walkable day built around your taste, not the tourist list.
 
-Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph finds the places in Vancouver that people with your taste love, agents plan a real walking day and explain every stop with the favorites that drove it, and a fact-checker shows what an AI alone would have told you instead.
+Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph finds the places in your city (anywhere in the world) that people with your taste love, agents plan a real walking day and explain every stop with the favorites that drove it, and a fact-checker shows what an AI alone would have told you instead.
 
 **[Live demo](https://tastewalk-fy6u.onrender.com/?example=indie)** · **[Demo video](https://youtu.be/dv12J566UVQ)** · **[The proof](#the-proof)** · **[How it works](#how-it-works)**
 
@@ -16,7 +16,7 @@ Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph 
 
 <a href="https://youtu.be/dv12J566UVQ"><img src="https://img.youtube.com/vi/dv12J566UVQ/maxresdefault.jpg" alt="Watch the TasteWalk demo video (1:51)" width="720"></a>
 
-<sub>Watch the 2-minute demo · Built for the Qloo Agentic Hackathon 2026 · City: Vancouver · The demo runs on a free plan: if it was asleep, the first load can take about a minute.</sub>
+<sub>Watch the 2-minute demo · Built for the Qloo Agentic Hackathon 2026 · Any city; examples in Vancouver · The demo runs on a free plan: if it was asleep, the first load can take about a minute.</sub>
 
 </div>
 
@@ -37,7 +37,7 @@ Name a few favorites (artists, films, shows, games, brands). Qloo's taste graph 
 **Say, type or tap what you love:** speak a sentence ("I love Radiohead, Ghibli films and
 Patagonia"), type it, or tap from 39 favorites across music, film, TV, books, games, brands and
 podcasts. The LLM only extracts the favorites you name; Qloo resolves each one. Then:
-1. **Taste agent** resolves each favorite to a Qloo entity and asks Qloo for places in Vancouver
+1. **Taste agent** resolves each favorite to a Qloo entity and asks Qloo for places in your city
    that people with that taste love, for each part of the day.
 2. **Planner agent** picks a varied day (one coffee, one meal, drinks last, no chains) by Qloo ID,
    orders it as a walk, schedules real times and swaps out places closed on arrival.
@@ -174,8 +174,9 @@ The repo ships a `Dockerfile` and a `render.yaml` blueprint.
 A GitHub Actions job pings `/healthz` every 10 minutes (set the repo variable `DEMO_URL`).
 
 ## Honest limitations
-- **Vancouver only** in the demo; a city is a centre, radius, timezone and map box in code
-  (Montreal is configured too).
+- **Any city** is geocoded with OpenStreetMap (centre and map box); Vancouver and Montreal have
+  exact timezones, other cities use a local date estimated from longitude. Qloo's place coverage
+  varies by city (we tested Vancouver, Montreal, Seoul and Paris). The four examples are in Vancouver.
 - **Walking distance** is an estimate: straight-line distance x 1.3, not street routing.
 - **Opening hours** are checked only when Qloo returns them (18 of the 24 example stops).
 - **Time at each stop** uses simple per-category estimates.

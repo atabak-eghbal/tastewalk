@@ -54,6 +54,8 @@ KIND_SLOT = {"meal": "food", "drinks": "drinks", "coffee": "coffee"}
 # Product choice: TasteWalk routes you to independent places. Qloo's popularity score can't do
 # this (it rates La Belle Province 0.32 and the local Olive et Gourmando 0.99), so: a short list.
 CHAINS = {
+    "cos",
+    "zara home",
     "h&m",
     "urban outfitters",
     "zara",

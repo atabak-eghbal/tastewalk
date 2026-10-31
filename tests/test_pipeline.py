@@ -138,3 +138,11 @@ def test_llm_rate_limit_falls_back_to_qloo_only(qloo, tmp_path):
     assert events[-1].data.qloo_itinerary.stops
     assert events[-1].data.baseline_itinerary is None
     assert all(s.why_it_fits for s in events[-1].data.qloo_itinerary.stops)
+
+
+def test_unknown_city_without_geocoder_is_a_clear_error(qloo):
+    user = UserInput(
+        city="Atlantis", favorites=[Favorite(name="Arcade Fire", type=FavoriteType.artist)]
+    )
+    events = list(run(user, qloo, None))
+    assert events[-1].step == "error" and "Atlantis" in events[-1].message

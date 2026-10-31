@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import time
 from enum import Enum
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -30,7 +29,9 @@ class Favorite(BaseModel):
 
 
 class UserInput(BaseModel):
-    city: Literal["Vancouver", "Montreal"] = "Vancouver"  # cities with a configured centre
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    city: str = Field(default="Vancouver", min_length=2, max_length=80)  # any city (geocoded)
     favorites: list[Favorite] = Field(min_length=1, max_length=8)
     start_time: time = time(10, 0)
     max_stops: int = Field(default=6, ge=2, le=10)
